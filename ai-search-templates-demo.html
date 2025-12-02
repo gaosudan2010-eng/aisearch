@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 搜索结构化回答模版 - 全场景 Demo</title>
+    <style>
+        /* ============================================
+           CSS 变量 & 基础样式
+           ============================================ */
+        :root {
+            --primary: #0066FF;
+            --primary-light: #E8F1FF;
+            --primary-dark: #0052CC;
+            --success: #10B981;
+            --success-light: #D1FAE5;
+            --warning: #F59E0B;
+            --warning-light: #FEF3C7;
+            --danger: #EF4444;
+            --danger-light: #FEE2E2;
+            --purple: #8B5CF6;
+            --purple-light: #EDE9FE;
+            --pink: #EC4899;
+            --pink-light: #FCE7F3;
+            --cyan: #06B6D4;
+            --cyan-light: #CFFAFE;
+            --bg-main: #F3F4F6;
+            --bg-card: #FFFFFF;
+            --text-primary: #111827;
+            --text-secondary: #6B7280;
+            --text-tertiary: #9CA3AF;
+            --border: #E5E7EB;
+            --border-light: #F3F4F6;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "PingFang SC", sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* 页面头部 */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 48px 24px;
+            text-align: center;
+        }
+
+        .page-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .page-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        /* 场景导航 */
+        .scene-nav {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            overflow-x: auto;
+        }
+
+        .scene-nav-inner {
+            display: flex;
+            gap: 12px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .scene-tab {
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            white-space: nowrap;
+            border: 1px solid var(--border);
+            background: white;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+        }
+
+        .scene-tab:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .scene-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 主容器 */
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+
+        /* 场景区块 */
+        .scene-section {
+            margin-bottom: 48px;
+        }
+
+        .scene-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .scene-title-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .scene-query {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            padding-left: 48px;
+        }
+
+        .scene-query code {
+            background: var(--bg-main);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-family: "SF Mono", Monaco, monospace;
+            font-size: 13px;
+        }
+
+        /* 通用卡片 */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+
+        .card-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            background: var(--bg-main);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* ============================================
+           场景 1：科普概念类
+           ============================================ */
+        .concept-card {
+            border-left: 4px solid var(--primary);
+        }
+
+        .tldr-text {
+            font-size: 16px;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        .tldr-text strong {
+            color: var(--primary);
+        }
+
+        .definition-box {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin: 16px 0;
+        }
+
+        .definition-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .definition-text {
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        .analogy-box {
+            background: var(--cyan-light);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            margin: 16px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .analogy-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .analogy-text {
+            font-size: 14px;
+            color: #0e7490;
+            line-height: 1.6;
+        }
+
+        .misconception-list {
+            list-style: none;
+        }
+
+        .misconception-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--border-light);
+        }
+
+        .misconception-item:last-child {
+            border-bottom: none;
+        }
+
+        .misconception-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--danger-light);
+            color: var(--danger);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .misconception-text {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           场景 2：操作教程类
+           ============================================ */
+        .tutorial-meta {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .meta-tag {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: var(--bg-main);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .step-list {
+            list-style: none;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 16px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border-light);
+            position: relative;
+        }
+
+        .step-item:last-child {
+            border-bottom: none;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .step-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .step-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .step-checkbox:hover {
+            border-color: var(--primary);
+        }
+
+        .step-checkbox.checked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .step-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .prereq-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+        }
+
+        .prereq-item {
+            background: var(--bg-main);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .prereq-icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .error-card {
+            background: var(--danger-light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .error-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--danger);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-solution {
+            font-size: 13px;
+            color: #991b1b;
+            padding-left: 24px;
+        }
+
+        /* ============================================
+           场景 3：排查诊断类
+           ============================================ */
+        .diagnosis-card {
+            border-left: 4px solid var(--warning);
+        }
+
+        .cause-list {
+            list-style: none;
+        }
+
+        .cause-item {
+            background: var(--bg-main);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .cause-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            cursor: pointer;
+        }
+
+        .cause-rank {
+            width: 28px;
+            height: 28px;
+            background: var(--warning);
+            color: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .cause-rank.low {
+            background: var(--text-tertiary);
+        }
+
+        .cause-title {
+            flex: 1;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .cause-prob {
+            font-size: 12px;
+            color: var(--warning);
+            font-weight: 500;
+        }
+
+        .cause-body {
+            padding: 0 16px 16px 56px;
+            display: none;
+        }
+
+        .cause-item.expanded .cause-body {
+            display: block;
+        }
+
+        .cause-check, .cause-fix {
+            margin-bottom: 12px;
+        }
+
+        .cause-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .cause-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           场景 4：对比选型类
+           ============================================ */
+        .compare-card {
+            border-left: 4px solid var(--purple);
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .compare-table th {
+            background: var(--bg-main);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .compare-table th:first-child {
+            width: 100px;
+        }
+
+        .compare-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+
+        .compare-table tr:hover {
+            background: var(--purple-light);
+        }
+
+        .winner-badge {
+            background: var(--success);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+        }
+
+        .recommend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .recommend-card {
+            background: var(--bg-main);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .recommend-card:hover {
+            border-color: var(--purple);
+        }
+
+        .recommend-card.featured {
+            background: var(--purple-light);
+            border-color: var(--purple);
+        }
+
+        .recommend-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 8px;
+        }
+
+        .recommend-product {
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recommend-reason {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .pros-cons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .pros-list, .cons-list {
+            list-style: none;
+        }
+
+        .pros-list li, .cons-list li {
+            font-size: 13px;
+            padding: 6px 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .pros-list li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
+        }
+
+        .cons-list li::before {
+            content: '✗';
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        /* ============================================
+           场景 5：规划方案类
+           ============================================ */
+        .plan-card {
+            border-left: 4px solid var(--pink);
+        }
+
+        .plan-overview {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .plan-stat {
+            text-align: center;
+        }
+
+        .plan-stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--pink);
+        }
+
+        .plan-stat-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 24px;
+        }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -24px;
+            top: 4px;
+            width: 16px;
+            height: 16px;
+            background: var(--pink);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 0 2px var(--pink);
+        }
+
+        .timeline-date {
+            font-size: 12px;
+            color: var(--pink);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .timeline-tasks {
+            list-style: none;
+        }
+
+        .timeline-tasks li {
+            font-size: 13px;
+            color: var(--text-secondary);
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-tasks li::before {
+            content: '•';
+            color: var(--pink);
+        }
+
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            padding: 10px;
+            background: var(--bg-main);
+            border-radius: var(--radius-sm);
+        }
+
+        .checklist-item input {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* ============================================
+           场景 6：专业咨询类
+           ============================================ */
+        .professional-card {
+            border-left: 4px solid var(--danger);
+        }
+
+        .law-quote {
+            background: linear-gradient(135deg, #fafafa, #f5f5f5);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            padding: 16px 20px;
+            margin: 16px 0;
+        }
+
+        .law-quote-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .law-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .law-quote-content {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .law-quote-content mark {
+            background: rgba(255, 212, 0, 0.4);
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+
+        .law-quote-source {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 10px;
+            text-align: right;
+        }
+
+        .responsibility-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin: 16px 0;
+        }
+
+        .responsibility-table th {
+            background: var(--bg-main);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .responsibility-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .tag-warning { background: var(--warning-light); color: #92400e; }
+        .tag-success { background: var(--success-light); color: #065f46; }
+        .tag-purple { background: var(--purple-light); color: #5b21b6; }
+
+        .warning-box {
+            background: var(--warning-light);
+            border: 1px solid var(--warning);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .warning-title {
+            font-weight: 600;
+            font-size: 14px;
+            color: #92400e;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .warning-text {
+            font-size: 13px;
+            color: #78350f;
+            line-height: 1.6;
+        }
+
+        /* ============================================
+           通用底部模块
+           ============================================ */
+        .related-section {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .related-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .related-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .related-tag {
+            padding: 8px 16px;
+            background: var(--bg-main);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .related-tag:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .source-section {
+            margin-top: 20px;
+            padding: 16px;
+            background: var(--bg-main);
+            border-radius: var(--radius-md);
+        }
+
+        .source-title {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-bottom: 10px;
+        }
+
+        .source-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .source-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+        }
+
+        .source-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+        }
+
+        .source-icon.gov { background: #dc2626; }
+        .source-icon.wiki { background: #000; }
+        .source-icon.news { background: #059669; }
+
+        /* 分隔线 */
+        .scene-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 48px 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 页面头部 -->
+    <header class="page-header">
+        <h1>🎨 AI 搜索结构化回答模版</h1>
+        <p>覆盖 6 大核心场景，让用户快速获取信息</p>
+    </header>
+
+    <!-- 场景导航 -->
+    <nav class="scene-nav">
+        <div class="scene-nav-inner">
+            <span class="scene-tab active" onclick="scrollToScene('concept')">📚 科普概念</span>
+            <span class="scene-tab" onclick="scrollToScene('tutorial')">🛠️ 操作教程</span>
+            <span class="scene-tab" onclick="scrollToScene('diagnosis')">🔍 排查诊断</span>
+            <span class="scene-tab" onclick="scrollToScene('compare')">⚖️ 对比选型</span>
+            <span class="scene-tab" onclick="scrollToScene('plan')">📅 规划方案</span>
+            <span class="scene-tab" onclick="scrollToScene('professional')">⚖️ 专业咨询</span>
+        </div>
+    </nav>
+
+    <!-- 主容器 -->
+    <main class="main-container">
+
+        <!-- ============================================
+             场景 1：科普概念类
+             ============================================ -->
+        <section class="scene-section" id="concept">
+            <div class="scene-title">
+                <span class="scene-title-icon" style="background: var(--primary-light); color: var(--primary);">📚</span>
+                科普 / 概念解释类
+            </div>
+            <div class="scene-query">示例 Query：<code>什么是 RLHF</code></div>
+
+            <!-- 顶部总结 -->
+            <div class="card concept-card">
+                <div class="card-header">
+                    <span>📋</span> 快速理解
+                </div>
+                <div class="card-body">
+                    <p class="tldr-text">
+                        <strong>RLHF（Reinforcement Learning from Human Feedback）</strong>是一种训练大语言模型的方法，通过人类反馈来优化模型输出，使其更符合人类偏好。它是 ChatGPT 等产品的核心技术之一。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 正式定义 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>📖</span> 正式定义
+                </div>
+                <div class="card-body">
+                    <div class="definition-box">
+                        <div class="definition-label">学术定义</div>
+                        <div class="definition-text">
+                            RLHF 是一种结合了强化学习（RL）与人类偏好数据的训练范式。它首先通过人类标注构建奖励模型（Reward Model），然后使用 PPO 等策略优化算法，引导语言模型生成更符合人类期望的回答。
+                        </div>
+                    </div>
+
+                    <div class="analogy-box">
+                        <span class="analogy-icon">💡</span>
+                        <div class="analogy-text">
+                            <strong>通俗比喻：</strong>就像训练一只小狗——当它做对了就给零食（正向奖励），做错了就不给（负向反馈）。RLHF 就是用人类的"点赞/点踩"来告诉 AI 什么是好回答。
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 常见误解 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>⚠️</span> 常见误解
+                </div>
+                <div class="card-body">
+                    <ul class="misconception-list">
+                        <li class="misconception-item">
+                            <span class="misconception-icon">✗</span>
+                            <div class="misconception-text">
+                                <strong>误解：RLHF 能让 AI 完全理解人类意图</strong><br>
+                                事实：RLHF 只能优化模型输出风格，不能真正理解语义。
+                            </div>
+                        </li>
+                        <li class="misconception-item">
+                            <span class="misconception-icon">✗</span>
+                            <div class="misconception-text">
+                                <strong>误解：RLHF 训练后模型不会犯错</strong><br>
+                                事实：RLHF 会减少明显错误，但仍可能产生"幻觉"。
+                            </div>
+                        </li>
+                        <li class="misconception-item">
+                            <span class="misconception-icon">✗</span>
+                            <div class="misconception-text">
+                                <strong>误解：只要有足够数据就能做好 RLHF</strong><br>
+                                事实：标注质量比数量更重要，低质量标注会导致奖励模型偏差。
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 相关延伸 -->
+            <div class="related-section">
+                <div class="related-title">🔗 相关概念</div>
+                <div class="related-tags">
+                    <span class="related-tag">什么是 PPO 算法？</span>
+                    <span class="related-tag">什么是 Reward Model？</span>
+                    <span class="related-tag">RLHF vs SFT 有什么区别？</span>
+                    <span class="related-tag">DPO 是什么？</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="scene-divider"></div>
+
+        <!-- ============================================
+             场景 2：操作教程类
+             ============================================ -->
+        <section class="scene-section" id="tutorial">
+            <div class="scene-title">
+                <span class="scene-title-icon" style="background: var(--success-light); color: var(--success);">🛠️</span>
+                操作教程类
+            </div>
+            <div class="scene-query">示例 Query：<code>Mac 怎么录屏</code></div>
+
+            <!-- 顶部总结 -->
+            <div class="card" style="border-left: 4px solid var(--success);">
+                <div class="card-header">
+                    <span>📋</span> 快速概览
+                </div>
+                <div class="card-body">
+                    <div class="tutorial-meta">
+                        <span class="meta-tag">⏱️ 预计 2 分钟</span>
+                        <span class="meta-tag">📊 难度：简单</span>
+                        <span class="meta-tag">💻 适用：macOS 10.14+</span>
+                    </div>
+                    <p class="tldr-text">
+                        Mac 自带录屏功能，无需安装软件。使用快捷键 <strong>Shift + Command + 5</strong> 即可打开录屏工具栏。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 步骤清单 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>📝</span> 操作步骤
+                </div>
+                <div class="card-body">
+                    <ul class="step-list">
+                        <li class="step-item">
+                            <span class="step-number">1</span>
+                            <div class="step-content">
+                                <div class="step-title">打开录屏工具</div>
+                                <div class="step-desc">按下 <strong>Shift + Command + 5</strong>，屏幕底部会出现录屏工具栏。</div>
+                            </div>
+                            <div class="step-checkbox" onclick="this.classList.toggle('checked')"></div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">2</span>
+                            <div class="step-content">
+                                <div class="step-title">选择录制模式</div>
+                                <div class="step-desc">点击「录制整个屏幕」或「录制所选区域」图标。</div>
+                            </div>
+                            <div class="step-checkbox" onclick="this.classList.toggle('checked')"></div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">3</span>
+                            <div class="step-content">
+                                <div class="step-title">开始录制</div>
+                                <div class="step-desc">点击「录制」按钮，或直接点击屏幕任意位置开始。</div>
+                            </div>
+                            <div class="step-checkbox" onclick="this.classList.toggle('checked')"></div>
+                        </li>
+                        <li class="step-item">
+                            <span class="step-number">4</span>
+                            <div class="step-content">
+                                <div class="step-title">停止并保存</div>
+                                <div class="step-desc">点击菜单栏的「停止」按钮，视频自动保存到桌面。</div>
+                            </div>
+                            <div class="step-checkbox" onclick="this.classList.toggle('checked')"></div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 前置条件 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>📦</span> 前置条件
+                </div>
+                <div class="card-body">
+                    <div class="prereq-grid">
+                        <div class="prereq-item">
+                            <div class="prereq-icon">💻</div>
+                            <div>macOS 10.14+</div>
+                        </div>
+                        <div class="prereq-item">
+                            <div class="prereq-icon">🔊</div>
+                            <div>麦克风权限（录音频）</div>
+                        </div>
+                        <div class="prereq-item">
+                            <div class="prereq-icon">💾</div>
+                            <div>足够存储空间</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 常见错误 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>❌</span> 常见问题
+                </div>
+                <div class="card-body">
+                    <div class="error-card">
+                        <div class="error-title">⚠️ 录屏没有声音</div>
+                        <div class="error-solution">
+                            点击「选项」→ 勾选麦克风 → 确保系统偏好设置中已授权麦克风权限。
+                        </div>
+                    </div>
+                    <div class="error-card">
+                        <div class="error-title">⚠️ 快捷键无反应</div>
+                        <div class="error-solution">
+                            检查系统版本是否低于 10.14，老版本需使用 QuickTime Player 录屏。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="scene-divider"></div>
+
+        <!-- ============================================
+             场景 3：排查诊断类
+             ============================================ -->
+        <section class="scene-section" id="diagnosis">
+            <div class="scene-title">
+                <span class="scene-title-icon" style="background: var(--warning-light); color: var(--warning);">🔍</span>
+                排查 / 诊断类
+            </div>
+            <div class="scene-query">示例 Query：<code>电脑开机很慢怎么办</code></div>
+
+            <!-- 顶部总结 -->
+            <div class="card diagnosis-card">
+                <div class="card-header">
+                    <span>📋</span> 快速诊断
+                </div>
+                <div class="card-body">
+                    <p class="tldr-text">
+                        电脑开机慢最常见的原因是 <strong>启动项过多</strong> 和 <strong>硬盘老化</strong>。建议先清理启动项，如果问题持续，考虑升级 SSD。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 原因列表 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>🎯</span> 可能原因（按概率排序）
+                </div>
+                <div class="card-body">
+                    <ul class="cause-list">
+                        <li class="cause-item expanded">
+                            <div class="cause-header" onclick="this.parentElement.classList.toggle('expanded')">
+                                <span class="cause-rank">1</span>
+                                <span class="cause-title">启动项过多</span>
+                                <span class="cause-prob">概率 60%</span>
+                            </div>
+                            <div class="cause-body">
+                                <div class="cause-check">
+                                    <div class="cause-label">如何自查</div>
+                                    <div class="cause-text">打开「任务管理器」→「启动」标签，查看启动项数量。超过 10 个通常会明显拖慢开机。</div>
+                                </div>
+                                <div class="cause-fix">
+                                    <div class="cause-label">解决方法</div>
+                                    <div class="cause-text">禁用不必要的启动项，只保留杀毒软件和必要驱动。</div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="cause-item">
+                            <div class="cause-header" onclick="this.parentElement.classList.toggle('expanded')">
+                                <span class="cause-rank">2</span>
+                                <span class="cause-title">机械硬盘老化</span>
+                                <span class="cause-prob">概率 25%</span>
+                            </div>
+                            <div class="cause-body">
+                                <div class="cause-check">
+                                    <div class="cause-label">如何自查</div>
+                                    <div class="cause-text">使用 CrystalDiskInfo 检查硬盘健康状态，关注「健康状态」和「通电时间」。</div>
+                                </div>
+                                <div class="cause-fix">
+                                    <div class="cause-label">解决方法</div>
+                                    <div class="cause-text">升级为 SSD 固态硬盘，开机速度可提升 5-10 倍。</div>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="cause-item">
+                            <div class="cause-header" onclick="this.parentElement.classList.toggle('expanded')">
+                                <span class="cause-rank low">3</span>
+                                <span class="cause-title">系统文件损坏</span>
+                                <span class="cause-prob">概率 10%</span>
+                            </div>
+                            <div class="cause-body">
+                                <div class="cause-check">
+                                    <div class="cause-label">如何自查</div>
+                                    <div class="cause-text">以管理员身份运行 CMD，输入 sfc /scannow 检查系统文件。</div>
+                                </div>
+                                <div class="cause-fix">
+                                    <div class="cause-label">解决方法</div>
+                                    <div class="cause-text">如有损坏文件，系统会自动修复。严重情况需重装系统。</div>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <div class="scene-divider"></div>
+
+        <!-- ============================================
+             场景 4：对比选型类
+             ============================================ -->
+        <section class="scene-section" id="compare">
+            <div class="scene-title">
+                <span class="scene-title-icon" style="background: var(--purple-light); color: var(--purple);">⚖️</span>
+                对比 / 选型类
+            </div>
+            <div class="scene-query">示例 Query：<code>iPhone 16 和 华为 Mate 70 哪个好</code></div>
+
+            <!-- 顶部总结 -->
+            <div class="card compare-card">
+                <div class="card-header">
+                    <span>📋</span> 快速结论
+                </div>
+                <div class="card-body">
+                    <p class="tldr-text">
+                        <strong>追求生态和流畅度选 iPhone 16</strong>，<strong>追求影像和信号选华为 Mate 70</strong>。两者价格相近，主要看你更依赖哪个生态系统。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 对比表 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>📊</span> 核心参数对比
+                </div>
+                <div class="card-body">
+                    <table class="compare-table">
+                        <thead>
+                            <tr>
+                                <th>维度</th>
+                                <th>iPhone 16 Pro</th>
+                                <th>华为 Mate 70 Pro</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>处理器</td>
+                                <td>A18 Pro<span class="winner-badge">更强</span></td>
+                                <td>麒麟 9100</td>
+                            </tr>
+                            <tr>
+                                <td>影像</td>
+                                <td>4800万 三摄</td>
+                                <td>5000万 可变光圈<span class="winner-badge">更强</span></td>
+                            </tr>
+                            <tr>
+                                <td>续航</td>
+                                <td>约 12 小时</td>
+                                <td>约 14 小时<span class="winner-badge">更强</span></td>
+                            </tr>
+                            <tr>
+                                <td>信号</td>
+                                <td>一般</td>
+                                <td>卫星通信<span class="winner-badge">更强</span></td>
+                            </tr>
+                            <tr>
+                                <td>生态</td>
+                                <td>iOS 生态完善<span class="winner-badge">更强</span></td>
+                                <td>鸿蒙生态成长中</td>
+                            </tr>
+                            <tr>
+                                <td>起售价</td>
+                                <td>¥7999</td>
+                                <td>¥6499<span class="winner-badge">更低</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 人群推荐 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>👥</span> 按人群推荐
+                </div>
+                <div class="card-body">
+                    <div class="recommend-grid">
+                        <div class="recommend-card featured">
+                            <div class="recommend-label">🎯 推荐给</div>
+                            <div class="recommend-product">iPhone 16 Pro <span class="winner-badge">首选</span></div>
+                            <div class="recommend-reason">已有 Mac/iPad/AirPods 等苹果设备，追求生态联动和 App 质量。</div>
+                        </div>
+                        <div class="recommend-card">
+                            <div class="recommend-label">🎯 推荐给</div>
+                            <div class="recommend-product">华为 Mate 70 Pro</div>
+                            <div class="recommend-reason">经常出差、信号要求高，或者热爱摄影、追求国产自研。</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 优缺点 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>✅</span> 优缺点速览
+                </div>
+                <div class="card-body">
+                    <div class="pros-cons">
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 12px;">iPhone 16 Pro</div>
+                            <ul class="pros-list">
+                                <li>iOS 生态成熟，App 质量高</li>
+                                <li>芯片性能强，游戏体验好</li>
+                                <li>保值率高</li>
+                            </ul>
+                            <ul class="cons-list">
+                                <li>信号相对较弱</li>
+                                <li>充电速度慢</li>
+                                <li>价格较高</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 12px;">华为 Mate 70 Pro</div>
+                            <ul class="pros-list">
+                                <li>影像能力强，可变光圈</li>
+                                <li>信号好，支持卫星通信</li>
+                                <li>续航长，充电快</li>
+                            </ul>
+                            <ul class="cons-list">
+                                <li>部分 App 适配不完善</li>
+                                <li>鸿蒙生态仍在建设</li>
+                                <li>芯片性能略逊</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="scene-divider"></div>
+
+        <!-- ============================================
+             场景 5：规划方案类
+             ============================================ -->
+        <section class="scene-section" id="plan">
+            <div class="scene-title">
+                <span class="scene-title-icon" style="background: var(--pink-light); color: var(--pink);">📅</span>
+                规划 / 方案类
+            </div>
+            <div class="scene-query">示例 Query：<code>帮我规划一个 7 天日本旅行</code></div>
+
+            <!-- 顶部总结 -->
+            <div class="card plan-card">
+                <div class="card-header">
+                    <span>📋</span> 行程概览
+                </div>
+                <div class="card-body">
+                    <div class="plan-overview">
+                        <div class="plan-stat">
+                            <div class="plan-stat-value">7</div>
+                            <div class="plan-stat-label">天</div>
+                        </div>
+                        <div class="plan-stat">
+                            <div class="plan-stat-value">3</div>
+                            <div class="plan-stat-label">城市</div>
+                        </div>
+                        <div class="plan-stat">
+                            <div class="plan-stat-value">¥15K</div>
+                            <div class="plan-stat-label">预算/人</div>
+                        </div>
+                    </div>
+                    <p class="tldr-text">
+                        推荐路线：<strong>东京(3天) → 京都(2天) → 大阪(2天)</strong>。涵盖现代都市、传统文化和美食购物，适合首次赴日。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 时间轴 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>🗓️</span> 每日行程
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Day 1-3 · 东京</div>
+                            <div class="timeline-title">现代都市体验</div>
+                            <ul class="timeline-tasks">
+                                <li>浅草寺 + 晴空塔</li>
+                                <li>涩谷 + 原宿</li>
+                                <li>秋叶原 + 银座</li>
+                                <li>迪士尼/台场（任选）</li>
+                            </ul>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Day 4-5 · 京都</div>
+                            <div class="timeline-title">传统文化之旅</div>
+                            <ul class="timeline-tasks">
+                                <li>伏见稻荷大社（千本鸟居）</li>
+                                <li>金阁寺 + 岚山竹林</li>
+                                <li>清水寺 + 二年坂</li>
+                                <li>和服体验（可选）</li>
+                            </ul>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-date">Day 6-7 · 大阪</div>
+                            <div class="timeline-title">美食购物天堂</div>
+                            <ul class="timeline-tasks">
+                                <li>大阪城公园</li>
+                                <li>道顿堀 + 心斋桥</li>
+                                <li>环球影城（可选）</li>
+                                <li>关西机场返程</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 准备清单 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>✅</span> 出行清单
+                </div>
+                <div class="card-body">
+                    <div class="checklist-grid">
+                        <label class="checklist-item"><input type="checkbox"> 护照（有效期6个月+）</label>
+                        <label class="checklist-item"><input type="checkbox"> 日本签证</label>
+                        <label class="checklist-item"><input type="checkbox"> JR Pass（7日券）</label>
+                        <label class="checklist-item"><input type="checkbox"> 随身 WiFi / 流量卡</label>
+                        <label class="checklist-item"><input type="checkbox"> 日元现金（约5万）</label>
+                        <label class="checklist-item"><input type="checkbox"> 转换插头</label>
+                        <label class="checklist-item"><input type="checkbox"> 舒适步行鞋</label>
+                        <label class="checklist-item"><input type="checkbox"> 常用药品</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="scene-divider"></div>
+
+        <!-- ============================================
+             场景 6：专业咨询类
+             ============================================ -->
+        <section class="scene-section" id="professional">
+            <div class="scene-title">
+                <span class="scene-title-icon" style="background: var(--danger-light); color: var(--danger);">⚖️</span>
+                专业咨询类（法律/医疗/财经）
+            </div>
+            <div class="scene-query">示例 Query：<code>租房合同没到期房东要求搬走怎么办</code></div>
+
+            <!-- 顶部总结 -->
+            <div class="card professional-card">
+                <div class="card-header">
+                    <span>📋</span> 快速结论
+                </div>
+                <div class="card-body">
+                    <p class="tldr-text">
+                        根据《民法典》，租赁合同期内<strong>房东无权单方面解除合同</strong>要求租客搬离。如房东强制驱赶，租客可要求其<strong>承担违约责任并赔偿损失</strong>。
+                    </p>
+                </div>
+            </div>
+
+            <!-- 法律依据 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>📖</span> 法律依据
+                </div>
+                <div class="card-body">
+                    <div class="law-quote">
+                        <div class="law-quote-title">
+                            《民法典》第七百二十二条
+                            <span class="law-badge">现行有效</span>
+                        </div>
+                        <div class="law-quote-content">
+                            承租人无正当理由未支付或者迟延支付租金的，出租人可以请求承租人在合理期限内支付；承租人逾期不支付的，出租人可以解除合同。<mark>但出租人不得在合同期限内无故要求承租人搬离。</mark>
+                        </div>
+                        <div class="law-quote-source">— 2021年1月1日起施行</div>
+                    </div>
+
+                    <div class="law-quote">
+                        <div class="law-quote-title">
+                            《民法典》第五百七十七条
+                            <span class="law-badge">现行有效</span>
+                        </div>
+                        <div class="law-quote-content">
+                            当事人一方不履行合同义务或者履行合同义务不符合约定的，应当承担继续履行、采取补救措施或者<mark>赔偿损失</mark>等违约责任。
+                        </div>
+                        <div class="law-quote-source">— 2021年1月1日起施行</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 情形分析 -->
+            <div class="card">
+                <div class="card-header">
+                    <span>📊</span> 情形分析
+                </div>
+                <div class="card-body">
+                    <table class="responsibility-table">
+                        <thead>
+                            <tr>
+                                <th>情形</th>
+                                <th>房东是否有权解约</th>
+                                <th>租客应对</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>房东无故要求搬离</td>
+                                <td><span class="tag tag-warning">无权</span></td>
+                                <td>拒绝搬离，要求履行合同</td>
+                            </tr>
+                            <tr>
+                                <td>房东要卖房</td>
+                                <td><span class="tag tag-warning">无权</span></td>
+                                <td>买卖不破租赁，可继续居住</td>
+                            </tr>
+                            <tr>
+                                <td>租客拖欠租金</td>
+                                <td><span class="tag tag-success">有权</span></td>
+                                <td>及时补缴，协商解决</td>
+                            </tr>
+                            <tr>
+                                <td>房屋需大修</td>
+                                <td><span class="tag tag-purple">视情况</span></td>
+                                <td>可要求减免租金或临时安置</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 风险提示 -->
+            <div class="warning-box">
+                <div class="warning-title">⚠️ 重要提示</div>
+                <div class="warning-text">
+                    本回答基于公开法律法规整理，<strong>不构成法律意见</strong>。具体案件请咨询执业律师，以获得针对性的专业建议。如遇房东强制驱赶，请保留证据并及时报警。
+                </div>
+            </div>
+
+            <!-- 来源 -->
+            <div class="source-section">
+                <div class="source-title">📚 参考来源</div>
+                <div class="source-list">
+                    <span class="source-item">
+                        <span class="source-icon gov">🏛️</span>
+                        《民法典》
+                    </span>
+                    <span class="source-item">
+                        <span class="source-icon news">📰</span>
+                        最高人民法院案例
+                    </span>
+                    <span class="source-item">
+                        <span class="source-icon wiki">📖</span>
+                        中国裁判文书网
+                    </span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // 场景导航滚动
+        function scrollToScene(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+            
+            // 更新 Tab 状态
+            document.querySelectorAll('.scene-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // 监听滚动，自动高亮 Tab
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('.scene-section');
+            const tabs = document.querySelectorAll('.scene-tab');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tabs.forEach((tab, index) => {
+                tab.classList.remove('active');
+                const sectionIds = ['concept', 'tutorial', 'diagnosis', 'compare', 'plan', 'professional'];
+                if (sectionIds[index] === current) {
+                    tab.classList.add('active');
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
+
