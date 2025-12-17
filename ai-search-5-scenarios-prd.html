@@ -1,0 +1,1858 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 搜索 5 大场景原型 - 夸克风格</title>
+    <style>
+        :root {
+            --primary: #0066FF;
+            --primary-light: rgba(0, 102, 255, 0.08);
+            --primary-gradient: linear-gradient(135deg, #2B7FFF 0%, #00B4FF 100%);
+            --success: #00B365;
+            --success-light: #E6F7EB;
+            --warning: #FF9500;
+            --warning-light: #FFF3E0;
+            --error: #FF4D4F;
+            --error-light: #FFEBEB;
+            --text-main: #222222;
+            --text-sub: #666666;
+            --text-light: #999999;
+            --bg-page: #FFFFFF;
+            --bg-gray: #F5F7FA;
+            --border: #EEEEEE;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+            background: linear-gradient(180deg, #E8EDF5 0%, #D0D8E8 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        /* 场景切换导航 */
+        .scenario-nav {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 16px;
+            background: white;
+            border: 2px solid transparent;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        .nav-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .nav-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* 手机外壳 */
+        .phone-wrapper {
+            display: flex;
+            justify-content: center;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            background: var(--bg-page);
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.2), 0 0 0 12px #1a1a1a;
+            display: none;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .phone-frame.active {
+            display: flex;
+        }
+
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 28px;
+            background: #1a1a1a;
+            border-radius: 20px;
+            z-index: 999;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            height: 54px;
+            padding: 20px 28px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            font-weight: 600;
+            background: var(--bg-page);
+        }
+
+        /* 搜索标题 */
+        .search-title {
+            padding: 12px 20px 10px;
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.35;
+        }
+
+        /* Tab 栏 */
+        .tab-bar {
+            display: flex;
+            padding: 0 16px;
+            background: var(--bg-page);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-item {
+            padding: 12px 14px;
+            font-size: 14px;
+            color: var(--text-sub);
+            position: relative;
+        }
+
+        .tab-item.active {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 18px;
+            height: 3px;
+            background: var(--text-main);
+            border-radius: 2px;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-page);
+            padding: 16px 20px;
+            padding-bottom: 80px;
+        }
+
+        /* AI 头部 */
+        .ai-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .ai-brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-logo {
+            width: 26px;
+            height: 26px;
+            border-radius: 7px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .ai-name {
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .ai-label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .voice-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--bg-gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* 引用角标 */
+        .cite {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 15px;
+            height: 15px;
+            padding: 0 4px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 3px;
+            margin-left: 2px;
+            vertical-align: super;
+        }
+
+        .cite-tag {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+
+        /* 高亮文本 */
+        .hl { color: var(--primary); font-weight: 500; }
+        .hl-success { color: var(--success); font-weight: 500; }
+        .hl-error { color: var(--error); font-weight: 500; }
+
+        /* 通用卡片 */
+        .card {
+            background: var(--bg-gray);
+            border-radius: 14px;
+            padding: 16px;
+            margin: 14px 0;
+        }
+
+        /* 悬浮按钮 */
+        .fab {
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 16px rgba(0, 102, 255, 0.35);
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 底部栏 */
+        .bottom-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: #FAFAFA;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 10px;
+        }
+
+        .bottom-back { font-size: 18px; color: var(--text-sub); padding: 6px; }
+        .bottom-icon { width: 28px; height: 28px; background: var(--bg-gray); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .bottom-search { flex: 1; height: 34px; background: #EEE; border-radius: 17px; padding: 0 14px; font-size: 13px; color: var(--text-light); display: flex; align-items: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* ========== PRD-01 教程型专属样式 ========== */
+        .goal-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-main);
+            margin-bottom: 16px;
+        }
+
+        .step-list { margin-top: 8px; }
+
+        .step-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .step-item:active { background: var(--bg-gray); margin: 0 -20px; padding-left: 20px; padding-right: 20px; }
+        .step-item:last-child { border-bottom: none; }
+
+        .step-num {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-content { flex: 1; }
+        .step-title { font-size: 15px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; }
+        .step-desc { font-size: 14px; color: var(--text-sub); line-height: 1.5; }
+
+        .step-copy {
+            font-size: 12px;
+            color: var(--primary);
+            padding: 4px 10px;
+            background: var(--primary-light);
+            border-radius: 12px;
+            flex-shrink: 0;
+        }
+
+        .env-selector {
+            display: flex;
+            gap: 8px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+        }
+
+        .env-pill {
+            padding: 8px 14px;
+            background: var(--bg-gray);
+            border-radius: 20px;
+            font-size: 13px;
+            color: var(--text-sub);
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .env-pill.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+            font-weight: 500;
+        }
+
+        .error-card {
+            background: var(--error-light);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 16px;
+        }
+
+        .error-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--error);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .error-item {
+            font-size: 13px;
+            color: var(--text-main);
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,77,79,0.15);
+        }
+
+        .error-item:last-child { border-bottom: none; }
+
+        /* ========== PRD-02 快速确认型专属样式 (One-line + tiny proof) ========== */
+        .oneline-answer {
+            padding: 20px 0;
+        }
+
+        .answer-main {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .answer-oneline {
+            font-size: 15px;
+            color: var(--text-sub);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .answer-proof {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--bg-gray);
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .proof-source {
+            font-size: 13px;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .proof-divider {
+            width: 1px;
+            height: 12px;
+            background: #DDD;
+        }
+
+        .proof-time {
+            font-size: 12px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .time-fresh {
+            background: var(--success-light);
+            color: var(--success);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .expand-more {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px;
+            color: var(--text-light);
+            font-size: 13px;
+            cursor: pointer;
+            border-top: 1px solid var(--border);
+            margin-top: 8px;
+        }
+
+        .expand-more:hover {
+            color: var(--primary);
+        }
+
+        .expand-arrow {
+            transition: transform 0.2s;
+        }
+
+        .expand-more.open .expand-arrow {
+            transform: rotate(180deg);
+        }
+
+        .expand-detail {
+            display: none;
+            padding: 16px;
+            background: var(--bg-gray);
+            border-radius: 12px;
+            margin-top: 12px;
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.7;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .expand-detail.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .disambiguation-box {
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 16px;
+        }
+
+        .dis-title {
+            font-size: 13px;
+            color: #92400E;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .dis-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dis-btn {
+            flex: 1;
+            padding: 12px;
+            background: white;
+            border: 1.5px solid #FDE68A;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .dis-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .dis-btn.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* ========== PRD-03 判断对错型（裁判模式）专属样式 ========== */
+        
+        /* 结论卡片 - 视觉最突出 */
+        .verdict-card {
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .verdict-correct {
+            background: var(--success-light);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .verdict-wrong {
+            background: var(--error-light);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .verdict-icon-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .verdict-correct .verdict-icon-box {
+            background: var(--success);
+            color: white;
+        }
+
+        .verdict-wrong .verdict-icon-box {
+            background: var(--error);
+            color: white;
+        }
+
+        .verdict-label {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .verdict-correct .verdict-label { color: var(--success); }
+        .verdict-wrong .verdict-label { color: var(--error); }
+
+        .verdict-text {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .verdict-tag {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            font-weight: 500;
+        }
+
+        .verdict-correct .verdict-tag {
+            background: var(--success);
+            color: white;
+        }
+
+        .verdict-wrong .verdict-tag {
+            background: rgba(255,77,79,0.2);
+            color: var(--error);
+        }
+
+        /* 一句解释 */
+        .one-line-explain {
+            font-size: 15px;
+            color: var(--text-sub);
+            line-height: 1.6;
+            padding: 0 4px;
+            margin-bottom: 16px;
+        }
+
+        /* 操作按钮 */
+        .action-btns {
+            display: flex;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 14px;
+            background: var(--bg-gray);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1.5px solid transparent;
+        }
+
+        .action-btn:active, .action-btn.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Bottom Sheet 遮罩 */
+        .bottom-sheet-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .bottom-sheet-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Bottom Sheet 容器 */
+        .bottom-sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            z-index: 300;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            max-height: 70%;
+            overflow-y: auto;
+        }
+
+        .bottom-sheet.show {
+            transform: translateY(0);
+        }
+
+        .sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: #DDD;
+            border-radius: 2px;
+            margin: 12px auto;
+        }
+
+        .sheet-header {
+            padding: 0 20px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sheet-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .sheet-content {
+            padding: 16px 20px 30px;
+        }
+
+        /* 理由列表 */
+        .reason-section {
+            margin-bottom: 20px;
+        }
+
+        .reason-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .reason-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .reason-item:last-child {
+            border-bottom: none;
+        }
+
+        .reason-num {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .reason-text {
+            font-size: 14px;
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* 示例卡片 */
+        .example-section {
+            margin-bottom: 20px;
+        }
+
+        .example-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .example-card {
+            background: var(--bg-gray);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .example-text {
+            font-size: 15px;
+            color: var(--text-main);
+            line-height: 1.5;
+            flex: 1;
+        }
+
+        .example-label {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        .example-copy {
+            padding: 6px 12px;
+            background: var(--primary);
+            color: white;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+
+        /* 错误提示 */
+        .error-tip {
+            background: #FFF5F5;
+            border: 1px solid #FED7D7;
+            border-radius: 12px;
+            padding: 14px;
+        }
+
+        .error-tip-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--error);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .error-tip-text {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.6;
+        }
+
+        .highlight-error {
+            background: var(--error-light);
+            color: var(--error);
+            padding: 2px 4px;
+            border-radius: 4px;
+            text-decoration: line-through;
+        }
+
+        .highlight-correct {
+            background: var(--success-light);
+            color: var(--success);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        /* ========== PRD-04 隐性决策型专属样式 ========== */
+        .stance-box {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .stance-main {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--success);
+            margin-bottom: 6px;
+        }
+
+        .stance-sub {
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        .condition-section {
+            margin: 16px 0;
+        }
+
+        .condition-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+
+        .condition-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .condition-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--bg-gray);
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .condition-item.selected {
+            background: var(--success-light);
+            border-color: var(--success);
+        }
+
+        .condition-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .condition-icon.check { background: var(--success-light); color: var(--success); }
+        .condition-icon.cross { background: var(--error-light); color: var(--error); }
+
+        .condition-text {
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .expand-section {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .expand-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .expand-content {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.7;
+        }
+
+        .alt-path {
+            background: var(--primary-light);
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 16px;
+            cursor: pointer;
+        }
+
+        .alt-path-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .alt-path-desc {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        /* ========== PRD-05 专业长尾型专属样式 ========== */
+        .pro-summary {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 16px;
+        }
+
+        .pro-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--warning);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .pro-text {
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-main);
+        }
+
+        .scope-box {
+            display: flex;
+            gap: 10px;
+            margin: 16px 0;
+        }
+
+        .scope-item {
+            flex: 1;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .scope-item.yes { background: var(--success-light); }
+        .scope-item.no { background: var(--error-light); }
+
+        .scope-label {
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .scope-text {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .scope-item.yes .scope-text { color: var(--success); }
+        .scope-item.no .scope-text { color: var(--error); }
+
+        .action-list {
+            margin: 16px 0;
+        }
+
+        .action-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            background: var(--bg-gray);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .action-item:active {
+            background: var(--primary-light);
+        }
+
+        .action-check {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #CCC;
+            border-radius: 50%;
+        }
+
+        .action-item.done .action-check {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .action-text {
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .reference-section {
+            margin-top: 20px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .ref-header {
+            padding: 14px;
+            background: var(--bg-gray);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+
+        .ref-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .ref-toggle {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .ref-content {
+            padding: 14px;
+            display: none;
+        }
+
+        .ref-content.open {
+            display: block;
+        }
+
+        .ref-item {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.6;
+        }
+
+        .quiz-section {
+            margin-top: 20px;
+        }
+
+        .quiz-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 12px;
+        }
+
+        .quiz-option {
+            padding: 14px;
+            background: var(--bg-gray);
+            border-radius: 12px;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-main);
+            cursor: pointer;
+            border: 1.5px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:active, .quiz-option.selected {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Toast 提示 */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 9999;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+    </style>
+</head>
+<body>
+
+<h1 class="page-title">AI 搜索 5 大场景原型</h1>
+
+<div class="scenario-nav">
+    <button class="nav-btn active" onclick="showScene(0)">PRD-01 教程型</button>
+    <button class="nav-btn" onclick="showScene(1)">PRD-02 快速确认</button>
+    <button class="nav-btn" onclick="showScene(2)">PRD-03 判断对错</button>
+    <button class="nav-btn" onclick="showScene(3)">PRD-04 隐性决策</button>
+    <button class="nav-btn" onclick="showScene(4)">PRD-05 专业长尾</button>
+</div>
+
+<div class="phone-wrapper">
+
+    <!-- ========== PRD-01 教程/技能型 ========== -->
+    <div class="phone-frame active" id="scene-0">
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+        </div>
+        <div class="search-title">Mac 终端配置代理教程</div>
+        <div class="tab-bar">
+            <div class="tab-item active">全部</div>
+            <div class="tab-item">经验</div>
+            <div class="tab-item">文档</div>
+        </div>
+
+        <div class="content-area">
+            <div class="ai-header">
+                <div class="ai-brand">
+                    <div class="ai-logo">Q</div>
+                    <span class="ai-name">夸克技术</span>
+                    <span class="ai-label">为你解答</span>
+                </div>
+                <div class="voice-btn">🔊</div>
+            </div>
+
+            <div class="goal-text">
+                为终端设置 HTTP/HTTPS 代理，让 <span class="hl">curl、git、npm</span> 等命令走代理网络。
+            </div>
+
+            <!-- 环境选择器 -->
+            <div class="env-selector">
+                <div class="env-pill active" onclick="selectEnv(this)">macOS</div>
+                <div class="env-pill" onclick="selectEnv(this)">Linux</div>
+                <div class="env-pill" onclick="selectEnv(this)">Windows</div>
+                <div class="env-pill" onclick="selectEnv(this)">临时生效</div>
+                <div class="env-pill" onclick="selectEnv(this)">永久生效</div>
+            </div>
+
+            <div class="step-list">
+                <div class="step-item" onclick="copyStep('export http_proxy=http://127.0.0.1:7890')">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <div class="step-title">设置 HTTP 代理</div>
+                        <div class="step-desc">export http_proxy=http://127.0.0.1:7890</div>
+                    </div>
+                    <span class="step-copy">复制</span>
+                </div>
+
+                <div class="step-item" onclick="copyStep('export https_proxy=http://127.0.0.1:7890')">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <div class="step-title">设置 HTTPS 代理</div>
+                        <div class="step-desc">export https_proxy=http://127.0.0.1:7890</div>
+                    </div>
+                    <span class="step-copy">复制</span>
+                </div>
+
+                <div class="step-item" onclick="copyStep('curl -I google.com')">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <div class="step-title">验证代理是否生效</div>
+                        <div class="step-desc">curl -I google.com（返回 200 即成功）</div>
+                    </div>
+                    <span class="step-copy">复制</span>
+                </div>
+            </div>
+
+            <div class="card" style="background: #F0F7FF;">
+                <div style="font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 8px;">💡 永久生效</div>
+                <div style="font-size: 13px; color: var(--text-sub); line-height: 1.6;">
+                    将上述命令添加到 <code>~/.zshrc</code> 或 <code>~/.bash_profile</code>，然后执行 <code>source ~/.zshrc</code>
+                </div>
+            </div>
+
+            <div class="error-card">
+                <div class="error-title">⚠️ 常见报错 Top 3</div>
+                <div class="error-item">❌ Connection refused → 检查代理端口是否正确</div>
+                <div class="error-item">❌ Proxy Authentication Required → 需配置用户名密码</div>
+                <div class="error-item">❌ SSL certificate problem → 尝试添加 -k 参数</div>
+            </div>
+
+        </div>
+
+        <div class="fab" onclick="copyAllSteps()">📋 复制全部步骤</div>
+
+        <div class="bottom-bar">
+            <span class="bottom-back">＜</span>
+            <div class="bottom-icon">📷</div>
+            <div class="bottom-search">Mac 终端配置代理教程</div>
+            <div class="bottom-icon">🎤</div>
+        </div>
+    </div>
+
+
+    <!-- ========== PRD-02 快速确认型 (One-line + tiny proof) ========== -->
+    <div class="phone-frame" id="scene-1">
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+        </div>
+        <div class="search-title">鲁迅是哪一年出生的</div>
+        <div class="tab-bar">
+            <div class="tab-item active">全部</div>
+            <div class="tab-item">百科</div>
+            <div class="tab-item">资讯</div>
+        </div>
+
+        <div class="content-area">
+            <div class="ai-header">
+                <div class="ai-brand">
+                    <div class="ai-logo">Q</div>
+                    <span class="ai-name">夸克百科</span>
+                    <span class="ai-label">为你解答</span>
+                </div>
+                <div class="voice-btn">🔊</div>
+            </div>
+
+            <!-- One-line 直答结构 -->
+            <div class="oneline-answer">
+                <!-- 答案（超短） -->
+                <div class="answer-main">1881年</div>
+                
+                <!-- 最小解释（一句话） -->
+                <div class="answer-oneline">
+                    鲁迅生于 1881 年 9 月 25 日，浙江绍兴人，中国现代文学奠基人。
+                </div>
+
+                <!-- 可信锚点（来源 + 时间） -->
+                <div class="answer-proof">
+                    <span class="proof-source">📚 百度百科</span>
+                    <span class="proof-divider"></span>
+                    <span class="proof-time">
+                        🕐 2024年收录
+                    </span>
+                </div>
+            </div>
+
+            <!-- 展开更多（折叠）-->
+            <div class="expand-more" id="expand-btn-1" onclick="toggleExpand(1)">
+                <span>展开更多背景</span>
+                <span class="expand-arrow">▾</span>
+            </div>
+            <div class="expand-detail" id="expand-detail-1">
+                <strong>完整生平：</strong><br>
+                鲁迅（1881年9月25日—1936年10月19日），原名周树人，字豫才。早年留学日本学医，后弃医从文，代表作有《狂人日记》《阿Q正传》《呐喊》等。<br><br>
+                <strong>重要时间线：</strong><br>
+                • 1881年 出生于浙江绍兴<br>
+                • 1902年 赴日留学<br>
+                • 1918年 发表《狂人日记》<br>
+                • 1936年 逝世于上海
+            </div>
+
+            <!-- 歧义消解（2个按钮） -->
+            <div class="disambiguation-box">
+                <div class="dis-title">🤔 如果你问的是：</div>
+                <div class="dis-btns">
+                    <div class="dis-btn selected" onclick="selectDis(this, 0)">
+                        ✍️ 鲁迅先生（作家）
+                    </div>
+                    <div class="dis-btn" onclick="selectDis(this, 1)">
+                        🎨 鲁迅美术学院
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bottom-bar">
+            <span class="bottom-back">＜</span>
+            <div class="bottom-icon">📷</div>
+            <div class="bottom-search">鲁迅是哪一年出生的</div>
+            <div class="bottom-icon">🎤</div>
+        </div>
+    </div>
+
+
+    <!-- ========== PRD-03 判断对错型（裁判模式） ========== -->
+    <div class="phone-frame" id="scene-2">
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+        </div>
+        <div class="search-title">depend on 和 depend of 哪个对</div>
+        <div class="tab-bar">
+            <div class="tab-item active">全部</div>
+            <div class="tab-item">语法</div>
+            <div class="tab-item">问答</div>
+        </div>
+
+        <div class="content-area">
+            <div class="ai-header">
+                <div class="ai-brand">
+                    <div class="ai-logo">Q</div>
+                    <span class="ai-name">夸克英语</span>
+                    <span class="ai-label">为你解答</span>
+                </div>
+                <div class="voice-btn">🔊</div>
+            </div>
+
+            <!-- 首屏：结论卡（视觉最突出） -->
+            <div class="verdict-card">
+                <div class="verdict-correct">
+                    <div class="verdict-icon-box">✓</div>
+                    <div>
+                        <div class="verdict-label">正确用法</div>
+                        <div class="verdict-text">depend on <span class="verdict-tag">推荐</span></div>
+                    </div>
+                </div>
+                <div class="verdict-wrong">
+                    <div class="verdict-icon-box">✗</div>
+                    <div>
+                        <div class="verdict-label">错误用法</div>
+                        <div class="verdict-text">depend of <span class="verdict-tag">非标准</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 首屏：一句解释 -->
+            <div class="one-line-explain">
+                <span class="highlight-correct">depend on</span> 是固定搭配，表示"依靠/取决于"；<span class="highlight-error">depend of</span> 在标准英语中不存在。
+            </div>
+
+            <!-- 首屏：操作按钮 -->
+            <div class="action-btns">
+                <div class="action-btn" id="btn-why" onclick="openBottomSheet('why')">📖 为什么</div>
+                <div class="action-btn" id="btn-example" onclick="openBottomSheet('example')">✍️ 给我正确例句</div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Sheet 遮罩 -->
+        <div class="bottom-sheet-overlay" id="sheet-overlay" onclick="closeBottomSheet()"></div>
+
+        <!-- Bottom Sheet 内容 -->
+        <div class="bottom-sheet" id="bottom-sheet">
+            <div class="sheet-handle"></div>
+            <div class="sheet-header">
+                <div class="sheet-title" id="sheet-title">为什么这样判断</div>
+            </div>
+            <div class="sheet-content" id="sheet-content">
+                <!-- 动态内容 -->
+            </div>
+        </div>
+
+        <div class="bottom-bar">
+            <span class="bottom-back">＜</span>
+            <div class="bottom-icon">📷</div>
+            <div class="bottom-search">depend on 和 depend of 哪个对</div>
+            <div class="bottom-icon">🎤</div>
+        </div>
+    </div>
+
+
+    <!-- ========== PRD-04 隐性决策型 ========== -->
+    <div class="phone-frame" id="scene-3">
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+        </div>
+        <div class="search-title">Notion 可以替代飞书文档吗</div>
+        <div class="tab-bar">
+            <div class="tab-item active">全部</div>
+            <div class="tab-item">测评</div>
+            <div class="tab-item">资讯</div>
+        </div>
+
+        <div class="content-area">
+            <div class="ai-header">
+                <div class="ai-brand">
+                    <div class="ai-logo">Q</div>
+                    <span class="ai-name">夸克效率</span>
+                    <span class="ai-label">为你解答</span>
+                </div>
+                <div class="voice-btn">🔊</div>
+            </div>
+
+            <div class="stance-box">
+                <div class="stance-main">🤔 看情况，不建议盲目替换</div>
+                <div class="stance-sub">需根据你的使用场景判断</div>
+            </div>
+
+            <div class="condition-section">
+                <div class="condition-title">✔ 适合你的情况（点击选择）</div>
+                <div class="condition-list">
+                    <div class="condition-item" onclick="toggleCondition(this)">
+                        <div class="condition-icon check">✓</div>
+                        <div class="condition-text">个人使用或小团队（≤5人）</div>
+                    </div>
+                    <div class="condition-item" onclick="toggleCondition(this)">
+                        <div class="condition-icon check">✓</div>
+                        <div class="condition-text">需要强大的数据库和模板功能</div>
+                    </div>
+                    <div class="condition-item" onclick="toggleCondition(this)">
+                        <div class="condition-icon check">✓</div>
+                        <div class="condition-text">不依赖即时通讯和审批流程</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="condition-section">
+                <div class="condition-title">✖ 不适合的情况</div>
+                <div class="condition-list">
+                    <div class="condition-item" onclick="toggleCondition(this)">
+                        <div class="condition-icon cross">✗</div>
+                        <div class="condition-text">公司统一使用飞书生态</div>
+                    </div>
+                    <div class="condition-item" onclick="toggleCondition(this)">
+                        <div class="condition-icon cross">✗</div>
+                        <div class="condition-text">需要视频会议/日程/审批集成</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="expand-section">
+                <div class="expand-title">💡 为什么这么建议</div>
+                <div class="expand-content">
+                    Notion 专注<span class="hl">知识库和项目管理</span>，功能更灵活；飞书文档是<span class="hl">协作办公全家桶</span>，与IM深度集成。两者定位不同，完全替代会丢失协作链路。<span class="cite">1</span><span class="cite">2</span>
+                </div>
+            </div>
+
+            <div class="alt-path">
+                <div class="alt-path-title">
+                    🔄 更好的方案
+                    <span style="font-size: 18px;">›</span>
+                </div>
+                <div class="alt-path-desc">
+                    Notion 做个人知识库 + 飞书处理团队协作，双工具并行效率最高。
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bottom-bar">
+            <span class="bottom-back">＜</span>
+            <div class="bottom-icon">📷</div>
+            <div class="bottom-search">Notion可以替代飞书文档吗</div>
+            <div class="bottom-icon">🎤</div>
+        </div>
+    </div>
+
+
+    <!-- ========== PRD-05 专业长尾型 ========== -->
+    <div class="phone-frame" id="scene-4">
+        <div class="status-bar">
+            <span>9:41</span>
+            <span>📶 🔋</span>
+        </div>
+        <div class="search-title">劳动仲裁需要准备什么材料</div>
+        <div class="tab-bar">
+            <div class="tab-item active">全部</div>
+            <div class="tab-item">政策</div>
+            <div class="tab-item">问答</div>
+        </div>
+
+        <div class="content-area">
+            <div class="ai-header">
+                <div class="ai-brand">
+                    <div class="ai-logo">Q</div>
+                    <span class="ai-name">夸克法律</span>
+                    <span class="ai-label">为你解答</span>
+                </div>
+                <div class="voice-btn">🔊</div>
+            </div>
+
+            <div class="pro-summary">
+                <div class="pro-badge">⚖️ 专业解答</div>
+                <div class="pro-text">
+                    劳动仲裁需准备<span class="hl">身份证明、劳动关系证据、诉求材料</span>三类文件，向用人单位所在地劳动仲裁委员会提交。<span class="cite">1</span>
+                </div>
+            </div>
+
+            <div class="scope-box">
+                <div class="scope-item yes">
+                    <div class="scope-label">✓ 适用情形</div>
+                    <div class="scope-text">工资拖欠、违法解雇、工伤赔偿</div>
+                </div>
+                <div class="scope-item no">
+                    <div class="scope-label">✗ 不适用</div>
+                    <div class="scope-text">社保补缴（找社保局）</div>
+                </div>
+            </div>
+
+            <div class="action-list">
+                <div class="action-title">📋 你现在要做的（清单）</div>
+                <div class="action-item" onclick="toggleAction(this)">
+                    <div class="action-check"></div>
+                    <div class="action-text">准备身份证复印件</div>
+                </div>
+                <div class="action-item" onclick="toggleAction(this)">
+                    <div class="action-check"></div>
+                    <div class="action-text">收集劳动合同/工资条/考勤记录</div>
+                </div>
+                <div class="action-item" onclick="toggleAction(this)">
+                    <div class="action-check"></div>
+                    <div class="action-text">撰写仲裁申请书（写明诉求金额）</div>
+                </div>
+                <div class="action-item" onclick="toggleAction(this)">
+                    <div class="action-check"></div>
+                    <div class="action-text">到仲裁委填表立案</div>
+                </div>
+            </div>
+
+            <div class="reference-section">
+                <div class="ref-header" onclick="toggleRef()">
+                    <div class="ref-title">📚 法律依据与引用</div>
+                    <div class="ref-toggle" id="ref-toggle">展开 ▾</div>
+                </div>
+                <div class="ref-content" id="ref-content">
+                    <div class="ref-item">
+                        <strong>《劳动争议调解仲裁法》第二十八条：</strong>申请人申请仲裁应当提交书面仲裁申请，并按照被申请人人数提交副本。<span class="cite">2</span>
+                    </div>
+                    <div class="ref-item">
+                        <strong>《劳动合同法》第八十二条：</strong>用人单位超过一个月不满一年未签合同，应支付双倍工资。<span class="cite">3</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="background: var(--warning-light); margin-top: 16px;">
+                <div style="font-size: 14px; font-weight: 600; color: var(--warning); margin-bottom: 8px;">⚠️ 常见误区</div>
+                <div style="font-size: 13px; color: var(--text-sub); line-height: 1.6;">
+                    ❌ 仲裁时效是 1 年（从知道权益受损之日起算），超期可能丧失胜诉权。<br>
+                    ❌ 微信聊天记录可以作为证据，但需公证或原始设备展示。
+                </div>
+            </div>
+
+            <div class="quiz-section">
+                <div class="quiz-title">🤔 我属于哪种情况？</div>
+                <div class="quiz-option" onclick="selectQuiz(this, '追讨欠薪')">公司拖欠工资不发</div>
+                <div class="quiz-option" onclick="selectQuiz(this, '违法解雇')">被公司无故辞退</div>
+                <div class="quiz-option" onclick="selectQuiz(this, '工伤赔偿')">工作中受伤要赔偿</div>
+            </div>
+
+        </div>
+
+        <div class="bottom-bar">
+            <span class="bottom-back">＜</span>
+            <div class="bottom-icon">📷</div>
+            <div class="bottom-search">劳动仲裁需要准备什么材料</div>
+            <div class="bottom-icon">🎤</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="toast" id="toast">已复制到剪贴板</div>
+
+<script>
+    // 场景切换
+    function showScene(index) {
+        document.querySelectorAll('.phone-frame').forEach((f, i) => {
+            f.classList.toggle('active', i === index);
+        });
+        document.querySelectorAll('.nav-btn').forEach((b, i) => {
+            b.classList.toggle('active', i === index);
+        });
+    }
+
+    // Toast 提示
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 1500);
+    }
+
+    // PRD-01: 复制步骤
+    function copyStep(text) {
+        navigator.clipboard.writeText(text);
+        showToast('已复制: ' + text.substring(0, 30) + '...');
+    }
+
+    // PRD-02: 展开更多
+    function toggleExpand(id) {
+        const btn = document.getElementById('expand-btn-' + id);
+        const detail = document.getElementById('expand-detail-' + id);
+        if (detail.classList.contains('show')) {
+            detail.classList.remove('show');
+            btn.classList.remove('open');
+            btn.querySelector('span').textContent = '展开更多背景';
+        } else {
+            detail.classList.add('show');
+            btn.classList.add('open');
+            btn.querySelector('span').textContent = '收起';
+        }
+    }
+
+    // PRD-02: 歧义消解选择
+    function selectDis(el, type) {
+        el.parentElement.querySelectorAll('.dis-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+        if (type === 0) {
+            showToast('已切换为: 鲁迅先生（作家）');
+        } else {
+            showToast('已切换为: 鲁迅美术学院');
+        }
+    }
+
+    function copyAllSteps() {
+        const steps = [
+            'export http_proxy=http://127.0.0.1:7890',
+            'export https_proxy=http://127.0.0.1:7890',
+            'curl -I google.com'
+        ].join('\n');
+        navigator.clipboard.writeText(steps);
+        showToast('已复制全部步骤');
+    }
+
+    function selectEnv(el) {
+        el.parentElement.querySelectorAll('.env-pill').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        showToast('已切换环境: ' + el.textContent);
+    }
+
+    // PRD-03: 判断对错 - Bottom Sheet 交互
+    function openBottomSheet(type) {
+        const overlay = document.getElementById('sheet-overlay');
+        const sheet = document.getElementById('bottom-sheet');
+        const title = document.getElementById('sheet-title');
+        const content = document.getElementById('sheet-content');
+
+        // 更新按钮状态
+        document.getElementById('btn-why').classList.remove('active');
+        document.getElementById('btn-example').classList.remove('active');
+
+        if (type === 'why') {
+            document.getElementById('btn-why').classList.add('active');
+            title.textContent = '📖 为什么这样判断';
+            content.innerHTML = `
+                <div class="reason-section">
+                    <div class="reason-title">💡 判断理由</div>
+                    <div class="reason-item">
+                        <div class="reason-num">1</div>
+                        <div class="reason-text">
+                            <strong>depend</strong> 是不及物动词，必须搭配介词 <span class="highlight-correct">on</span> 或 <span class="highlight-correct">upon</span> 才能接宾语。
+                        </div>
+                    </div>
+                    <div class="reason-item">
+                        <div class="reason-num">2</div>
+                        <div class="reason-text">
+                            英语中没有 <span class="highlight-error">depend of</span> 的用法，这是受其他语言（如法语 dépendre de）影响产生的错误迁移。
+                        </div>
+                    </div>
+                    <div class="reason-item">
+                        <div class="reason-num">3</div>
+                        <div class="reason-text">
+                            类似固定搭配：rely <strong>on</strong>、count <strong>on</strong>、insist <strong>on</strong>，都用 on 而非 of。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="error-tip">
+                    <div class="error-tip-title">⚠️ 常见误区</div>
+                    <div class="error-tip-text">
+                        很多人混淆 depend on 和 independent of（独立于），注意：<br>
+                        • depend <strong>on</strong> = 依靠<br>
+                        • independent <strong>of</strong> = 独立于（这里用 of 是对的）
+                    </div>
+                </div>
+            `;
+        } else {
+            document.getElementById('btn-example').classList.add('active');
+            title.textContent = '✍️ 正确例句';
+            content.innerHTML = `
+                <div class="example-section">
+                    <div class="example-title">📝 常用例句</div>
+                    
+                    <div class="example-card">
+                        <div>
+                            <div class="example-text">It <strong>depends on</strong> the weather.</div>
+                            <div class="example-label">日常口语 · 最常见</div>
+                        </div>
+                        <div class="example-copy" onclick="copyExample('It depends on the weather.')">复制</div>
+                    </div>
+
+                    <div class="example-card">
+                        <div>
+                            <div class="example-text">The outcome <strong>depends on</strong> many factors.</div>
+                            <div class="example-label">正式语境 · 书面表达</div>
+                        </div>
+                        <div class="example-copy" onclick="copyExample('The outcome depends on many factors.')">复制</div>
+                    </div>
+
+                    <div class="example-card">
+                        <div>
+                            <div class="example-text">You can <strong>depend on</strong> me.</div>
+                            <div class="example-label">表达信任 · 常用口语</div>
+                        </div>
+                        <div class="example-copy" onclick="copyExample('You can depend on me.')">复制</div>
+                    </div>
+                </div>
+
+                <div class="error-tip">
+                    <div class="error-tip-title">❌ 错误写法</div>
+                    <div class="error-tip-text">
+                        <span class="highlight-error">It depends of the weather.</span> ✗<br>
+                        <span class="highlight-error">You can depend of me.</span> ✗<br>
+                        <span style="font-size: 12px; color: #999; margin-top: 4px; display: block;">这些写法在标准英语中均不成立</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        overlay.classList.add('show');
+        sheet.classList.add('show');
+    }
+
+    function closeBottomSheet() {
+        const overlay = document.getElementById('sheet-overlay');
+        const sheet = document.getElementById('bottom-sheet');
+        overlay.classList.remove('show');
+        sheet.classList.remove('show');
+        document.getElementById('btn-why').classList.remove('active');
+        document.getElementById('btn-example').classList.remove('active');
+    }
+
+    function copyExample(text) {
+        navigator.clipboard.writeText(text);
+        showToast('已复制: ' + text);
+    }
+
+    // PRD-04: 条件选择
+    function toggleCondition(el) {
+        el.classList.toggle('selected');
+    }
+
+    // PRD-05: 行动清单
+    function toggleAction(el) {
+        el.classList.toggle('done');
+        const check = el.querySelector('.action-check');
+        if (el.classList.contains('done')) {
+            check.textContent = '✓';
+        } else {
+            check.textContent = '';
+        }
+    }
+
+    // PRD-05: 引用展开
+    function toggleRef() {
+        const content = document.getElementById('ref-content');
+        const toggle = document.getElementById('ref-toggle');
+        if (content.classList.contains('open')) {
+            content.classList.remove('open');
+            toggle.textContent = '展开 ▾';
+        } else {
+            content.classList.add('open');
+            toggle.textContent = '收起 ▴';
+        }
+    }
+
+    // PRD-05: 选择题
+    function selectQuiz(el, type) {
+        el.parentElement.querySelectorAll('.quiz-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+        showToast('已选择: ' + type + '，正在加载专属方案...');
+    }
+</script>
+
+</body>
+</html>

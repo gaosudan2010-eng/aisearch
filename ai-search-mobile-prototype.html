@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 搜索手机端原型</title>
+    <style>
+        :root {
+            --primary: #0066FF;
+            --primary-light: #EBF2FF;
+            --text-main: #1F1F1F;
+            --text-sub: #666666;
+            --bg-body: #F5F7FA;
+            --bg-card: #FFFFFF;
+            --border: #EEEEEE;
+            --shadow: 0 2px 12px rgba(0,0,0,0.06);
+            --safe-area-top: env(safe-area-inset-top, 20px);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 模拟手机外壳 (桌面端查看时) */
+        .phone-frame {
+            width: 100%;
+            height: 100%;
+            max-width: 414px;
+            margin: 0 auto;
+            background: #fff;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(0,0,0,0.1);
+        }
+
+        /* 顶部导航 */
+        .navbar {
+            padding: calc(var(--safe-area-top) + 12px) 16px 12px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .search-bar {
+            flex: 1;
+            height: 40px;
+            background: #F2F4F7;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            font-size: 15px;
+            color: var(--text-main);
+            position: relative;
+        }
+
+        .search-icon {
+            margin-right: 8px;
+            color: #999;
+        }
+
+        .search-input {
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            width: 100%;
+            outline: none;
+        }
+
+        /* 场景切换 Tab */
+        .tabs {
+            display: flex;
+            background: #fff;
+            padding: 0 4px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-item {
+            flex: 1;
+            text-align: center;
+            padding: 14px 0;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-sub);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .tab-item.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 24px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        /* 内容区域 */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            background: var(--bg-body);
+            position: relative;
+        }
+
+        .scene-container {
+            display: none;
+            padding: 16px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .scene-container.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* === 通用卡片样式 === */
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .ai-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #0066FF, #00C2FF);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        /* === 场景一：操作指引 (How-to) === */
+        .step-list {
+            position: relative;
+            padding-left: 12px;
+        }
+
+        .step-list::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 10px;
+            bottom: 20px;
+            width: 2px;
+            background: #E0E0E0;
+        }
+
+        .step-item {
+            position: relative;
+            padding-bottom: 24px;
+            padding-left: 24px;
+        }
+
+        .step-item:last-child {
+            padding-bottom: 0;
+        }
+
+        .step-dot {
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .step-item.active .step-dot {
+            background: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .step-text {
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--text-main);
+        }
+
+        .step-code {
+            background: #F4F6F8;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            margin-top: 8px;
+            color: #333;
+            border: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .copy-btn {
+            font-size: 12px;
+            color: var(--primary);
+            background: #fff;
+            border: 1px solid var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* === 场景二：百科定义 (Definition) === */
+        .definition-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+
+        .highlight {
+            background: rgba(255, 212, 0, 0.2);
+            color: #B35F00;
+            font-weight: 600;
+            padding: 0 2px;
+            border-radius: 4px;
+        }
+
+        .chips-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .chip {
+            background: #F5F7FA;
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chip:active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        /* === 场景三：决策建议 (Decision) === */
+        .decision-header {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .decision-option {
+            flex: 1;
+            padding: 12px;
+            background: #F9FAFB;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .decision-option.selected {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .option-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .option-sub {
+            font-size: 11px;
+            color: var(--text-sub);
+        }
+
+        .decision-content {
+            background: #fff;
+            border-radius: 12px;
+        }
+
+        .pros-cons-row {
+            display: flex;
+            margin-bottom: 12px;
+            align-items: flex-start;
+        }
+
+        .icon-box {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+            font-size: 12px;
+        }
+
+        .icon-box.pros { background: #E6F7EB; color: #00B365; }
+        .icon-box.cons { background: #FFF0EB; color: #FF4D4F; }
+
+        .row-text {
+            font-size: 14px;
+            color: var(--text-main);
+            line-height: 1.5;
+        }
+
+        .source-tag {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            display: block;
+        }
+
+        /* 底部操作栏 (模拟浏览器) */
+        .bottom-nav {
+            height: 60px;
+            background: #F9F9F9;
+            border-top: 1px solid #DDD;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: var(--safe-area-top);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            color: #666;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="phone-frame">
+    <!-- 顶部搜索栏 -->
+    <div class="navbar">
+        <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" id="searchInput" value="Oracle设置字符集教程" readonly>
+        </div>
+    </div>
+
+    <!-- 场景 Tab -->
+    <div class="tabs">
+        <div class="tab-item active" onclick="switchScene(0, 'Oracle设置字符集教程')">操作指引</div>
+        <div class="tab-item" onclick="switchScene(1, '卡贴机是什么意思')">极速百科</div>
+        <div class="tab-item" onclick="switchScene(2, '猪苗买7公斤还是10公斤')">决策建议</div>
+    </div>
+
+    <!-- 内容区域 -->
+    <div class="content-area">
+        
+        <!-- 场景一：操作指引 (How-to) -->
+        <div class="scene-container active" id="scene-0">
+            <div class="card">
+                <div class="card-header">
+                    <div class="ai-badge">⚡ AI 速览</div>
+                    <span style="font-size: 12px; color: #999;">3个步骤</span>
+                </div>
+                
+                <div class="step-list">
+                    <div class="step-item active">
+                        <div class="step-dot"></div>
+                        <div class="step-text">登录数据库，检查当前字符集。</div>
+                        <div class="step-code">
+                            SELECT * FROM nls_database_parameters;
+                            <span class="copy-btn">复制</span>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-dot"></div>
+                        <div class="step-text">重启数据库到 Mount 状态，修改字符集为 ZHS16GBK。</div>
+                        <div class="step-code">
+                            ALTER SYSTEM ENABLE RESTRICTED SESSION;<br>
+                            ALTER DATABASE CHARACTER SET ZHS16GBK;
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-dot"></div>
+                        <div class="step-text">重启数据库，验证修改是否生效。</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px; text-align: center; color: var(--primary); font-size: 13px; font-weight: 500;">
+                    展开完整教程 ▾
+                </div>
+            </div>
+
+            <!-- 模拟搜索结果列表 -->
+            <div style="padding: 0 16px;">
+                <div style="font-size: 13px; color: #999; margin-bottom: 10px;">搜索结果</div>
+                <div style="background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                    <div style="color: #1a0dab; font-size: 16px; margin-bottom: 4px;">Oracle 修改字符集步骤详解 - CSDN博客</div>
+                    <div style="font-size: 13px; color: #545454;">2023年5月12日 — 介绍如何在Linux环境下修改Oracle数据库字符集...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 场景二：极速百科 (Definition) -->
+        <div class="scene-container" id="scene-1">
+            <div class="card">
+                <div class="card-title">卡贴机</div>
+                <div class="definition-text">
+                    指<span class="highlight">有网络锁</span>的 iPhone（通常为美版/日版合约机），无法直接识别国内 SIM 卡。需要配合一张超薄芯片（<span class="highlight">卡贴</span>）贴在 SIM 卡上欺骗系统信号才能使用。
+                </div>
+                
+                <div class="chips-container">
+                    <div class="chip">值得买吗？</div>
+                    <div class="chip">和无锁机区别</div>
+                    <div class="chip">信号稳不稳定</div>
+                </div>
+            </div>
+
+            <div style="padding: 0 16px;">
+                <div style="background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                    <div style="color: #1a0dab; font-size: 16px; margin-bottom: 4px;">卡贴机能不能买？2024年真实体验报告</div>
+                    <div style="font-size: 13px; color: #545454;">便宜是真便宜，但折腾也是真折腾。如果你是小白...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 场景三：决策建议 (Decision) -->
+        <div class="scene-container" id="scene-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="ai-badge">⚖️ 观点权衡</div>
+                </div>
+
+                <div class="decision-header">
+                    <div class="decision-option" onclick="selectOption(this, 0)">
+                        <div class="option-title">买 7 公斤</div>
+                        <div class="option-sub">成本低 · 周期长</div>
+                    </div>
+                    <div class="decision-option selected" onclick="selectOption(this, 1)">
+                        <div class="option-title">买 10 公斤</div>
+                        <div class="option-sub">抗病强 · 回本快</div>
+                    </div>
+                </div>
+
+                <div class="decision-content" id="decision-content">
+                    <!-- 动态内容 -->
+                    <div class="pros-cons-row">
+                        <div class="icon-box pros">👍</div>
+                        <div class="row-text">
+                            <strong>成活率更高：</strong>10公斤仔猪通常已过断奶应激期，抗病能力更强，特别适合新手养殖。
+                            <span class="source-tag">来自 搜猪网专家</span>
+                        </div>
+                    </div>
+                    <div class="pros-cons-row">
+                        <div class="icon-box pros">👍</div>
+                        <div class="row-text">
+                            <strong>出栏时间短：</strong>基础体重更大，能缩短约15-20天出栏，加快资金周转。
+                        </div>
+                    </div>
+                    <div class="pros-cons-row">
+                        <div class="icon-box cons">⚠️</div>
+                        <div class="row-text">
+                            <strong>初始成本高：</strong>单头价格比7公斤贵约100-150元，资金压力较大。
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 0 16px;">
+                <div style="background: white; padding: 16px; border-radius: 12px; margin-bottom: 12px;">
+                    <div style="color: #1a0dab; font-size: 16px; margin-bottom: 4px;">仔猪抓多大的好？养猪老手告诉你真相</div>
+                    <div style="font-size: 13px; color: #545454;">新手建议抓30斤左右的，老手可以抓小一点的降低成本...</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 底部导航 (装饰) -->
+    <div class="bottom-nav">
+        <span class="nav-icon">◀</span>
+        <span class="nav-icon">●</span>
+        <span class="nav-icon">■</span>
+    </div>
+</div>
+
+<script>
+    function switchScene(index, query) {
+        // 更新 Tab 样式
+        const tabs = document.querySelectorAll('.tab-item');
+        tabs.forEach(t => t.classList.remove('active'));
+        tabs[index].classList.add('active');
+
+        // 更新搜索框文字
+        const input = document.getElementById('searchInput');
+        input.value = query;
+
+        // 切换内容区域
+        const scenes = document.querySelectorAll('.scene-container');
+        scenes.forEach(s => s.classList.remove('active'));
+        document.getElementById('scene-' + index).classList.add('active');
+    }
+
+    function selectOption(el, type) {
+        // 切换选中样式
+        document.querySelectorAll('.decision-option').forEach(o => o.classList.remove('selected'));
+        el.classList.add('selected');
+
+        // 更新内容
+        const content = document.getElementById('decision-content');
+        if (type === 0) { // 7公斤
+            content.innerHTML = `
+                <div class="pros-cons-row">
+                    <div class="icon-box pros">👍</div>
+                    <div class="row-text">
+                        <strong>成本更低：</strong>单头价格便宜，适合资金有限或大规模补栏。
+                        <span class="source-tag">来自 养猪论坛</span>
+                    </div>
+                </div>
+                <div class="pros-cons-row">
+                    <div class="icon-box cons">⚠️</div>
+                    <div class="row-text">
+                        <strong>护理难度大：</strong>抗应激能力弱，容易拉稀，对保温和饲料要求极高。
+                    </div>
+                </div>
+            `;
+        } else { // 10公斤
+            content.innerHTML = `
+                <div class="pros-cons-row">
+                    <div class="icon-box pros">👍</div>
+                    <div class="row-text">
+                        <strong>成活率更高：</strong>10公斤仔猪通常已过断奶应激期，抗病能力更强，特别适合新手养殖。
+                        <span class="source-tag">来自 搜猪网专家</span>
+                    </div>
+                </div>
+                <div class="pros-cons-row">
+                    <div class="icon-box pros">👍</div>
+                    <div class="row-text">
+                        <strong>出栏时间短：</strong>基础体重更大，能缩短约15-20天出栏，加快资金周转。
+                    </div>
+                </div>
+                <div class="pros-cons-row">
+                    <div class="icon-box cons">⚠️</div>
+                    <div class="row-text">
+                        <strong>初始成本高：</strong>单头价格比7公斤贵约100-150元，资金压力较大。
+                    </div>
+                </div>
+            `;
+        }
+    }
+</script>
+
+</body>
+</html>
