@@ -1,0 +1,1703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>教程类 8 种场景 - 高保真 Generative UI</title>
+    <style>
+        :root {
+            --primary: #3370FF;
+            --primary-light: #EDF4FF;
+            --primary-border: #C7D2FE;
+            --success: #00B578;
+            --success-bg: #E8F8F2;
+            --warning: #FF8F1F;
+            --warning-bg: #FFF7E8;
+            --error: #FA5151;
+            --error-bg: #FFEFEF;
+            --purple: #8B5CF6;
+            --purple-bg: #F3EFFE;
+            --cyan: #06B6D4;
+            --cyan-bg: #ECFEFF;
+            --text-1: #1A1A1A;
+            --text-2: #666666;
+            --text-3: #999999;
+            --bg: #F5F5F5;
+            --card: #FFFFFF;
+            --border: #EEEEEE;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+        html {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background: #1F2937;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 24px;
+            gap: 20px;
+        }
+
+        /* Phone Frame */
+        .phone {
+            width: 375px;
+            height: 780px;
+            background: var(--card);
+            border-radius: 44px;
+            overflow: hidden;
+            box-shadow: 0 0 0 10px #374151, 0 0 0 12px #4B5563, 0 25px 50px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background: #374151;
+            border-radius: 0 0 16px 16px;
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 48px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .type-badge {
+            position: absolute;
+            top: 54px;
+            right: 12px;
+            padding: 3px 8px;
+            background: var(--primary);
+            color: white;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 500;
+            z-index: 50;
+        }
+
+        .type-badge.t1 { background: #3370FF; }
+        .type-badge.t2 { background: #00B578; }
+        .type-badge.t3 { background: #FA5151; }
+        .type-badge.t4 { background: #8B5CF6; }
+        .type-badge.t5 { background: #06B6D4; }
+        .type-badge.t6 { background: #FF8F1F; }
+        .type-badge.t7 { background: #EC4899; }
+        .type-badge.t8 { background: #10B981; }
+
+        /* Header */
+        .header { padding: 8px 16px 0; }
+
+        .query-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+
+        .tab {
+            padding: 8px 12px;
+            font-size: 13px;
+            color: var(--text-2);
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 12px;
+            right: 12px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 1px;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+        }
+
+        .main::-webkit-scrollbar { display: none; }
+
+        /* Source Header */
+        .source-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .source-icon { font-size: 14px; }
+
+        .source-text {
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* ============================================
+           通用卡片
+           ============================================ */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .card-icon.primary { background: var(--primary-light); }
+        .card-icon.success { background: var(--success-bg); }
+        .card-icon.warning { background: var(--warning-bg); }
+        .card-icon.error { background: var(--error-bg); }
+        .card-icon.purple { background: var(--purple-bg); }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .card-body { padding: 12px 14px; }
+
+        /* ============================================
+           核心答案卡片
+           ============================================ */
+        .fact-card {
+            border: 2px solid var(--primary-border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            background: var(--primary-light);
+        }
+
+        .fact-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            background: white;
+            border: 1px solid var(--primary-border);
+            border-radius: 12px;
+            font-size: 10px;
+            color: var(--primary);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .fact-answer {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-1);
+            line-height: 1.3;
+        }
+
+        .fact-desc {
+            font-size: 12px;
+            color: var(--text-2);
+            margin-top: 4px;
+        }
+
+        /* ============================================
+           T1: 配置步骤流 (Path + Step Flow)
+           ============================================ */
+        .path-flow {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 12px;
+            padding: 10px 12px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+
+        .path-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--text-2);
+        }
+
+        .path-item.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .path-arrow {
+            color: var(--text-3);
+            font-size: 10px;
+        }
+
+        .config-step {
+            display: flex;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .config-step:last-child { border-bottom: none; }
+
+        .step-num {
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-num.done { background: var(--success); }
+
+        .step-content { flex: 1; }
+
+        .step-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 4px;
+        }
+
+        .step-desc {
+            font-size: 12px;
+            color: var(--text-2);
+            line-height: 1.5;
+        }
+
+        .step-code {
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: #1E1E1E;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #D4D4D4;
+        }
+
+        /* ============================================
+           T2: 流程型 Step Flow (前置条件)
+           ============================================ */
+        .prereq-box {
+            background: var(--warning-bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .prereq-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--warning);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .prereq-list {
+            font-size: 12px;
+            color: #92400E;
+            line-height: 1.6;
+        }
+
+        .prereq-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .prereq-check {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--warning);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .prereq-check.checked {
+            background: var(--warning);
+            color: white;
+        }
+
+        .flow-step {
+            display: flex;
+            position: relative;
+            padding-left: 32px;
+            padding-bottom: 16px;
+        }
+
+        .flow-step::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .flow-step:last-child::before { display: none; }
+
+        .flow-num {
+            position: absolute;
+            left: 0;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .flow-content {
+            flex: 1;
+            padding-left: 8px;
+        }
+
+        .flow-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 4px;
+        }
+
+        .flow-desc {
+            font-size: 12px;
+            color: var(--text-2);
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           T3: 故障排查树 (Decision Flow)
+           ============================================ */
+        .decision-node {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .decision-question {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 10px;
+        }
+
+        .decision-icon {
+            font-size: 16px;
+        }
+
+        .decision-options {
+            display: flex;
+            gap: 8px;
+        }
+
+        .decision-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .decision-btn:active {
+            transform: scale(0.98);
+        }
+
+        .decision-btn.yes {
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .decision-btn.no {
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .decision-btn.selected {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .solution-box {
+            background: var(--success-bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .solution-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--success);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .solution-text {
+            font-size: 12px;
+            color: #047857;
+            line-height: 1.5;
+        }
+
+        .fail-box {
+            background: var(--error-bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .fail-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--error);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .fail-text {
+            font-size: 12px;
+            color: #DC2626;
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           T4: 判断 + 操作混合 UI
+           ============================================ */
+        .judge-card {
+            border: 2px solid var(--success);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            background: var(--success-bg);
+        }
+
+        .judge-card.no {
+            border-color: var(--error);
+            background: var(--error-bg);
+        }
+
+        .judge-card.partial {
+            border-color: var(--warning);
+            background: var(--warning-bg);
+        }
+
+        .judge-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            background: var(--success);
+            border-radius: 14px;
+            font-size: 12px;
+            color: white;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .judge-card.no .judge-tag { background: var(--error); }
+        .judge-card.partial .judge-tag { background: var(--warning); }
+
+        .judge-answer {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .method-tabs {
+            display: flex;
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 3px;
+            margin-bottom: 10px;
+        }
+
+        .method-tab {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-3);
+            cursor: pointer;
+        }
+
+        .method-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* ============================================
+           T5: 安装清单 + 流程 UI
+           ============================================ */
+        .install-checklist {
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .checklist-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--cyan);
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .checklist-item:last-child { border-bottom: none; }
+
+        .check-box {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+
+        .checklist-item.checked .check-box {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .check-text {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text-1);
+        }
+
+        .checklist-item.checked .check-text {
+            color: var(--text-3);
+            text-decoration: line-through;
+        }
+
+        .check-version {
+            font-size: 11px;
+            color: var(--text-3);
+            background: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* ============================================
+           T6: 硬件操作步骤 UI (风险提示)
+           ============================================ */
+        .danger-box {
+            background: linear-gradient(135deg, #FEE2E2, #FECACA);
+            border: 2px solid var(--error);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .danger-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--error);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .danger-text {
+            font-size: 12px;
+            color: #991B1B;
+            line-height: 1.5;
+        }
+
+        .hardware-step {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            background: var(--bg);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            position: relative;
+        }
+
+        .hardware-step.danger {
+            background: var(--error-bg);
+            border: 1px solid #FECACA;
+        }
+
+        .hardware-num {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            color: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .hardware-step.danger .hardware-num {
+            background: var(--error);
+        }
+
+        .hardware-content { flex: 1; }
+
+        .hardware-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hardware-title .warn-icon {
+            color: var(--error);
+            font-size: 14px;
+        }
+
+        .hardware-desc {
+            font-size: 12px;
+            color: var(--text-2);
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           T7: 规则 → 操作 UI
+           ============================================ */
+        .rule-box {
+            background: linear-gradient(135deg, var(--purple-bg), #EDE9FE);
+            border: 2px solid #C4B5FD;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .rule-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--purple);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .rule-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-1);
+            line-height: 1.5;
+        }
+
+        .apply-box {
+            background: var(--success-bg);
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .apply-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--success);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        /* ============================================
+           T8: 阶段流程 UI (Stage Flow)
+           ============================================ */
+        .stage-flow {
+            position: relative;
+        }
+
+        .stage-item {
+            display: flex;
+            gap: 12px;
+            padding-bottom: 16px;
+            position: relative;
+        }
+
+        .stage-item::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 36px;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .stage-item:last-child::before { display: none; }
+
+        .stage-badge {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .stage-badge.phase1 { background: #3B82F6; }
+        .stage-badge.phase2 { background: #8B5CF6; }
+        .stage-badge.phase3 { background: #EC4899; }
+        .stage-badge.phase4 { background: #10B981; }
+
+        .stage-content { flex: 1; }
+
+        .stage-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 4px;
+        }
+
+        .stage-time {
+            font-size: 10px;
+            color: var(--text-3);
+            margin-bottom: 6px;
+        }
+
+        .stage-tasks {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 8px 10px;
+        }
+
+        .stage-task {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-2);
+            padding: 4px 0;
+        }
+
+        .stage-task::before {
+            content: '•';
+            color: var(--text-3);
+        }
+
+        /* ============================================
+           底部导航
+           ============================================ */
+        .bottom-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px 26px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .nav-input {
+            flex: 1;
+            margin: 0 10px;
+            padding: 8px 14px;
+            background: var(--bg);
+            border: none;
+            border-radius: 18px;
+            font-size: 11px;
+            color: var(--text-3);
+            text-align: center;
+        }
+
+        /* 关键词 */
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .keyword-tag {
+            padding: 4px 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 11px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================
+     T1: 设置/配置类 - 配置步骤流 UI
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge t1">T1 设置配置类</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">宏碁投影仪如何调整画面高低</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 5 篇来源 · 配置步骤流</span>
+        </div>
+
+        <!-- 核心答案 -->
+        <div class="fact-card">
+            <div class="fact-tag">✓ 最佳路径</div>
+            <div class="fact-answer">先调支脚 → 再梯形校正 → 有Lens Shift优先用</div>
+            <div class="fact-desc">按此顺序可获得最佳画质</div>
+        </div>
+
+        <!-- 菜单路径 -->
+        <div class="path-flow">
+            <span class="path-item">遥控器 Menu</span>
+            <span class="path-arrow">›</span>
+            <span class="path-item">图像设置</span>
+            <span class="path-arrow">›</span>
+            <span class="path-item active">梯形校正</span>
+        </div>
+
+        <!-- 配置步骤 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon primary">⚙️</div>
+                <div class="card-title">配置步骤（按顺序执行）</div>
+            </div>
+            <div class="card-body" style="padding-top:0;">
+                <div class="config-step">
+                    <div class="step-num done">1</div>
+                    <div class="step-content">
+                        <div class="step-title">调整底部支脚（物理操作）</div>
+                        <div class="step-desc">旋转投影仪底部前方支脚<br>• 顺时针拧 → 画面上移<br>• 逆时针拧 → 画面下移</div>
+                    </div>
+                </div>
+                <div class="config-step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <div class="step-title">梯形校正（菜单操作）</div>
+                        <div class="step-desc">按 Menu → 图像设置 → 梯形校正<br>• + 键：画面上移<br>• - 键：画面下移</div>
+                    </div>
+                </div>
+                <div class="config-step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <div class="step-title">镜头位移（高端型号）</div>
+                        <div class="step-desc">如有 Lens Shift 功能，优先使用<br>Menu → 镜头设置 → 镜头位移</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="keyword-tags">
+            <span class="keyword-tag">#物理调节优先</span>
+            <span class="keyword-tag">#梯形校正</span>
+            <span class="keyword-tag">#Lens Shift</span>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="宏碁投影仪调整画面" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     T2: 操作流程类 - 流程型 Step Flow
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge t2">T2 操作流程类</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">学习通二维码签到怎么解决</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 8 篇来源 · 流程型教程</span>
+        </div>
+
+        <!-- 前置条件 -->
+        <div class="prereq-box">
+            <div class="prereq-label">⚠️ 前置条件（必须满足）</div>
+            <div class="prereq-list">
+                <div class="prereq-item" onclick="this.querySelector('.prereq-check').classList.toggle('checked')">
+                    <div class="prereq-check">✓</div>
+                    <span>已安装学习通 App 最新版本</span>
+                </div>
+                <div class="prereq-item" onclick="this.querySelector('.prereq-check').classList.toggle('checked')">
+                    <div class="prereq-check">✓</div>
+                    <span>已登录正确的学校账号</span>
+                </div>
+                <div class="prereq-item" onclick="this.querySelector('.prereq-check').classList.toggle('checked')">
+                    <div class="prereq-check">✓</div>
+                    <span>手机摄像头权限已开启</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 核心答案 -->
+        <div class="fact-card">
+            <div class="fact-tag">✓ 核心方案</div>
+            <div class="fact-answer">打开 App → 消息 → 课程群 → 扫码签到</div>
+        </div>
+
+        <!-- 流程步骤 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon success">📋</div>
+                <div class="card-title">完整操作流程</div>
+            </div>
+            <div class="card-body">
+                <div class="flow-step">
+                    <div class="flow-num">1</div>
+                    <div class="flow-content">
+                        <div class="flow-title">打开学习通 App</div>
+                        <div class="flow-desc">确保是最新版本</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">2</div>
+                    <div class="flow-content">
+                        <div class="flow-title">点击底部「消息」</div>
+                        <div class="flow-desc">找到对应课程群</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">3</div>
+                    <div class="flow-content">
+                        <div class="flow-title">点击老师发的签到通知</div>
+                        <div class="flow-desc">如显示"二维码签到"则进入下一步</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">4</div>
+                    <div class="flow-content">
+                        <div class="flow-title">对准教室二维码扫描</div>
+                        <div class="flow-desc">确保在教室范围内，GPS 定位准确</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="学习通二维码签到" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     T3: 故障/异常解决类 - 故障排查树
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge t3">T3 故障排查类</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">Steam Deck 投屏有色差</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 6 篇来源 · 故障排查</span>
+        </div>
+
+        <!-- 核心答案 -->
+        <div class="fact-card">
+            <div class="fact-tag">🔧 排查思路</div>
+            <div class="fact-answer">从低风险到高风险逐步排查</div>
+            <div class="fact-desc">按以下顺序检查，每步有失败分支</div>
+        </div>
+
+        <!-- 排查决策树 -->
+        <div class="decision-node">
+            <div class="decision-question">
+                <span class="decision-icon">🔍</span>
+                <span>Step 1: 换一根 HDMI 线试试？</span>
+            </div>
+            <div class="decision-options">
+                <button class="decision-btn yes" onclick="selectDecision(this, 'yes1')">✓ 解决了</button>
+                <button class="decision-btn no" onclick="selectDecision(this, 'no1')">✗ 没解决</button>
+            </div>
+            <div class="solution-box" id="yes1" style="display:none;">
+                <div class="solution-label">✅ 问题原因</div>
+                <div class="solution-text">原 HDMI 线质量问题或接口接触不良，更换后解决。</div>
+            </div>
+        </div>
+
+        <div class="decision-node">
+            <div class="decision-question">
+                <span class="decision-icon">🔍</span>
+                <span>Step 2: 检查 Steam Deck 显示设置</span>
+            </div>
+            <div class="decision-options">
+                <button class="decision-btn yes" onclick="selectDecision(this, 'yes2')">✓ 解决了</button>
+                <button class="decision-btn no" onclick="selectDecision(this, 'no2')">✗ 没解决</button>
+            </div>
+            <div class="solution-box" id="yes2" style="display:none;">
+                <div class="solution-label">✅ 问题原因</div>
+                <div class="solution-text">色彩空间设置不匹配，改为"自动"或"Limited"。</div>
+            </div>
+        </div>
+
+        <div class="decision-node">
+            <div class="decision-question">
+                <span class="decision-icon">🔍</span>
+                <span>Step 3: 检查电视/显示器设置</span>
+            </div>
+            <div class="decision-options">
+                <button class="decision-btn yes" onclick="selectDecision(this, 'yes3')">✓ 解决了</button>
+                <button class="decision-btn no" onclick="selectDecision(this, 'no3')">✗ 没解决</button>
+            </div>
+            <div class="fail-box" id="no3" style="display:none;">
+                <div class="fail-label">❌ 建议下一步</div>
+                <div class="fail-text">可能是硬件兼容性问题，尝试更换扩展坞或联系官方客服。</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="Steam Deck 投屏色差" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     T4: 兼容/影响判断类 - 判断 + 操作混合
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge t4">T4 兼容判断类</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">VLOOKUP 可以多列匹配吗</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 7 篇来源 · 判断 + 方案</span>
+        </div>
+
+        <!-- Yes/No 判断 -->
+        <div class="judge-card">
+            <div class="judge-tag">✓ 可以</div>
+            <div class="judge-answer">VLOOKUP 支持多列匹配，有 4 种方法</div>
+        </div>
+
+        <!-- 方法切换 -->
+        <div class="method-tabs">
+            <button class="method-tab active" onclick="switchMethod(0)">辅助列</button>
+            <button class="method-tab" onclick="switchMethod(1)">CHOOSE</button>
+            <button class="method-tab" onclick="switchMethod(2)">INDEX</button>
+            <button class="method-tab" onclick="switchMethod(3)">XLOOKUP</button>
+        </div>
+
+        <div class="card" id="method-0">
+            <div class="card-header">
+                <div class="card-icon success">✓</div>
+                <div class="card-title">方法一：辅助列（最推荐）</div>
+            </div>
+            <div class="card-body">
+                <div class="step-desc">思路：把多列拼成一列，再用 VLOOKUP</div>
+                <div class="step-code">=A2&B2  // 新增辅助列
+=VLOOKUP(E2&F2, A:C, 3, 0)</div>
+                <div style="margin-top:8px;font-size:11px;color:var(--success);">✔ 稳定易懂，适合日常办公</div>
+            </div>
+        </div>
+
+        <div class="card" id="method-1" style="display:none;">
+            <div class="card-header">
+                <div class="card-icon primary">💡</div>
+                <div class="card-title">方法二：CHOOSE（不改原表）</div>
+            </div>
+            <div class="card-body">
+                <div class="step-code">=VLOOKUP(E2&F2, 
+  CHOOSE({1,2}, A2:A100&B2:B100, C2:C100), 
+  2, 0)</div>
+                <div style="margin-top:8px;font-size:11px;color:var(--warning);">⚠ 公式略复杂，不太好维护</div>
+            </div>
+        </div>
+
+        <div class="card" id="method-2" style="display:none;">
+            <div class="card-header">
+                <div class="card-icon purple">📊</div>
+                <div class="card-title">方法三：INDEX+MATCH（专业）</div>
+            </div>
+            <div class="card-body">
+                <div class="step-code">=INDEX(C:C, MATCH(1, (A:A=E2)*(B:B=F2), 0))</div>
+                <div style="margin-top:8px;font-size:11px;color:var(--warning);">⚠ 老版 Excel 需 Ctrl+Shift+Enter</div>
+            </div>
+        </div>
+
+        <div class="card" id="method-3" style="display:none;">
+            <div class="card-header">
+                <div class="card-icon success">👑</div>
+                <div class="card-title">方法四：XLOOKUP（王者）</div>
+            </div>
+            <div class="card-body">
+                <div class="step-code">=XLOOKUP(1, (A:A=E2)*(B:B=F2), C:C)</div>
+                <div style="margin-top:8px;font-size:11px;color:var(--success);">✔ 最优雅，新 Excel 专属</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="VLOOKUP 多列匹配" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     T5: 安装/部署类 - 安装清单 + 流程
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge t5">T5 安装部署类</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">superset 安装教程</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于官方文档 · 安装教程</span>
+        </div>
+
+        <!-- 环境依赖清单 -->
+        <div class="install-checklist">
+            <div class="checklist-label">📦 环境依赖清单（安装前必备）</div>
+            <div class="checklist-item" onclick="this.classList.toggle('checked')">
+                <div class="check-box">✓</div>
+                <span class="check-text">Python</span>
+                <span class="check-version">≥ 3.8</span>
+            </div>
+            <div class="checklist-item" onclick="this.classList.toggle('checked')">
+                <div class="check-box">✓</div>
+                <span class="check-text">Node.js</span>
+                <span class="check-version">≥ 16.0</span>
+            </div>
+            <div class="checklist-item" onclick="this.classList.toggle('checked')">
+                <div class="check-box">✓</div>
+                <span class="check-text">pip 包管理器</span>
+                <span class="check-version">最新版</span>
+            </div>
+            <div class="checklist-item" onclick="this.classList.toggle('checked')">
+                <div class="check-box">✓</div>
+                <span class="check-text">PostgreSQL / MySQL</span>
+                <span class="check-version">数据库</span>
+            </div>
+        </div>
+
+        <!-- 安装流程 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon primary">🚀</div>
+                <div class="card-title">安装步骤</div>
+            </div>
+            <div class="card-body" style="padding-top:0;">
+                <div class="config-step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <div class="step-title">创建虚拟环境</div>
+                        <div class="step-code">python -m venv superset-env
+source superset-env/bin/activate</div>
+                    </div>
+                </div>
+                <div class="config-step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <div class="step-title">安装 Superset</div>
+                        <div class="step-code">pip install apache-superset</div>
+                    </div>
+                </div>
+                <div class="config-step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <div class="step-title">初始化数据库</div>
+                        <div class="step-code">superset db upgrade
+superset init</div>
+                    </div>
+                </div>
+                <div class="config-step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <div class="step-title">启动服务</div>
+                        <div class="step-code">superset run -p 8088 --with-threads</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="superset 安装教程" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     T6: 硬件操作/更换类 - 硬件操作步骤 UI
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge t6">T6 硬件操作类</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">拆 SSD 换到别的电脑</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 5 篇来源 · 硬件操作</span>
+        </div>
+
+        <!-- 风险警告 -->
+        <div class="danger-box">
+            <div class="danger-label">⚠️ 安全警告（操作前必读）</div>
+            <div class="danger-text">
+                • 操作前必须关机并断开电源<br>
+                • 触摸金属释放静电<br>
+                • 不可带电操作，可能损坏硬件
+            </div>
+        </div>
+
+        <!-- 操作步骤 -->
+        <div class="hardware-step">
+            <div class="hardware-num">1</div>
+            <div class="hardware-content">
+                <div class="hardware-title">关机并断开电源</div>
+                <div class="hardware-desc">完全关机，拔掉电源线，笔记本需拆除电池</div>
+            </div>
+        </div>
+
+        <div class="hardware-step">
+            <div class="hardware-num">2</div>
+            <div class="hardware-content">
+                <div class="hardware-title">打开机箱/后盖</div>
+                <div class="hardware-desc">使用合适的螺丝刀，记录螺丝位置</div>
+            </div>
+        </div>
+
+        <div class="hardware-step danger">
+            <div class="hardware-num">3</div>
+            <div class="hardware-content">
+                <div class="hardware-title">拆卸 SSD <span class="warn-icon">⚠️</span></div>
+                <div class="hardware-desc">
+                    <strong>⚠ 不可逆操作</strong><br>
+                    • M.2 SSD：拧下固定螺丝，斜向上拔出<br>
+                    • SATA SSD：断开数据线和电源线
+                </div>
+            </div>
+        </div>
+
+        <div class="hardware-step">
+            <div class="hardware-num">4</div>
+            <div class="hardware-content">
+                <div class="hardware-title">安装到新电脑</div>
+                <div class="hardware-desc">确认接口兼容（M.2/SATA），按相反顺序安装</div>
+            </div>
+        </div>
+
+        <div class="hardware-step">
+            <div class="hardware-num">5</div>
+            <div class="hardware-content">
+                <div class="hardware-title">开机检测</div>
+                <div class="hardware-desc">进入 BIOS 确认识别，可能需要重装系统</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="拆 SSD 换电脑" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     T7: 规则/机制理解型 - 规则 → 操作 UI
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge t7">T7 规则理解型</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">后浇带是从筏板到屋面吗</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于规范标准 · 规则解读</span>
+        </div>
+
+        <!-- 规则结论 -->
+        <div class="rule-box">
+            <div class="rule-label">📐 规则结论</div>
+            <div class="rule-text">
+                后浇带<strong>不一定</strong>从筏板到屋面，需根据设计要求确定。
+            </div>
+        </div>
+
+        <!-- 规则解释 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon purple">📖</div>
+                <div class="card-title">规则说明</div>
+            </div>
+            <div class="card-body">
+                <div class="step-desc" style="line-height:1.7;">
+                    <strong>1. 什么是后浇带？</strong><br>
+                    临时施工缝，用于解决混凝土收缩和沉降问题。<br><br>
+                    <strong>2. 设置范围取决于：</strong><br>
+                    • 结构长度（超长建筑需要）<br>
+                    • 沉降差异（高低层交接处）<br>
+                    • 设计图纸要求<br><br>
+                    <strong>3. 常见情况：</strong><br>
+                    • 沉降后浇带：基础到地上 1-2 层<br>
+                    • 收缩后浇带：可贯通全高
+                </div>
+            </div>
+        </div>
+
+        <!-- 如何应用 -->
+        <div class="apply-box">
+            <div class="apply-label">✅ 如何确认？</div>
+            <div style="font-size:12px;color:#047857;line-height:1.6;">
+                1. 查看施工图纸「后浇带平面图」<br>
+                2. 确认设计说明中的后浇带类型<br>
+                3. 如有疑问，咨询结构设计师
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="后浇带范围" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     T8: 商业/实体流程类 - 阶段流程 UI
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge t8">T8 商业流程类</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">直播货物线下领取店怎么开</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 12 篇来源 · 商业流程</span>
+        </div>
+
+        <!-- 核心答案 -->
+        <div class="fact-card">
+            <div class="fact-tag">💡 核心定位</div>
+            <div class="fact-answer" style="font-size:15px;">给直播商家做「自提 + 售后 + 转化」的最后一公里服务</div>
+            <div class="fact-desc">你是履约节点 + 流量承接点</div>
+        </div>
+
+        <!-- 阶段流程 -->
+        <div class="stage-flow">
+            <div class="stage-item">
+                <div class="stage-badge phase1">P1</div>
+                <div class="stage-content">
+                    <div class="stage-title">选模式（决策期）</div>
+                    <div class="stage-time">⏱ 1-3 天</div>
+                    <div class="stage-tasks">
+                        <div class="stage-task">确定：社区自提 / 主播合作 / 品牌体验</div>
+                        <div class="stage-task">新手推荐「社区自提型」最稳</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stage-item">
+                <div class="stage-badge phase2">P2</div>
+                <div class="stage-content">
+                    <div class="stage-title">选址 + 筹备</div>
+                    <div class="stage-time">⏱ 7-14 天</div>
+                    <div class="stage-tasks">
+                        <div class="stage-task">跑 3 个社区看自提点</div>
+                        <div class="stage-task">优先小区出入口 / 菜市场旁</div>
+                        <div class="stage-task">租 30-50㎡，像仓库不像咖啡馆</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stage-item">
+                <div class="stage-badge phase3">P3</div>
+                <div class="stage-content">
+                    <div class="stage-title">对接货源 + 证照</div>
+                    <div class="stage-time">⏱ 7-10 天</div>
+                    <div class="stage-tasks">
+                        <div class="stage-task">接入平台团购（抖音/快手）</div>
+                        <div class="stage-task">办理个体工商户 + 食品许可证</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stage-item">
+                <div class="stage-badge phase4">P4</div>
+                <div class="stage-content">
+                    <div class="stage-title">试运营 + 放大</div>
+                    <div class="stage-time">⏱ 持续</div>
+                    <div class="stage-tasks">
+                        <div class="stage-task">先做平台自提 → 再做社群 → 最后自播</div>
+                        <div class="stage-task">目标：日单 300+，月收入 9000+</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="直播货物领取店" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<script>
+// 决策树选择
+function selectDecision(btn, targetId) {
+    const node = btn.closest('.decision-node');
+    node.querySelectorAll('.decision-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    
+    // 隐藏所有结果
+    node.querySelectorAll('.solution-box, .fail-box').forEach(box => box.style.display = 'none');
+    
+    // 显示对应结果
+    const target = document.getElementById(targetId);
+    if (target) target.style.display = 'block';
+}
+
+// 方法切换
+function switchMethod(idx) {
+    document.querySelectorAll('.method-tab').forEach((tab, i) => {
+        tab.classList.toggle('active', i === idx);
+    });
+    for (let i = 0; i < 4; i++) {
+        const el = document.getElementById('method-' + i);
+        if (el) el.style.display = i === idx ? 'block' : 'none';
+    }
+}
+</script>
+
+</body>
+</html>

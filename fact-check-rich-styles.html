@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>事实核查 - 多样化样式 Generative UI</title>
+    <style>
+        :root {
+            --primary: #3370FF;
+            --primary-light: #EDF4FF;
+            --primary-border: #C7D2FE;
+            --success: #00B578;
+            --success-bg: #E8F8F2;
+            --warning: #FF8F1F;
+            --warning-bg: #FFF7E8;
+            --error: #FA5151;
+            --error-bg: #FFEFEF;
+            --purple: #8B5CF6;
+            --purple-bg: #F3EFFE;
+            --cyan: #06B6D4;
+            --cyan-bg: #ECFEFF;
+            --text-1: #1A1A1A;
+            --text-2: #666666;
+            --text-3: #999999;
+            --bg: #F5F5F5;
+            --card: #FFFFFF;
+            --border: #EEEEEE;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background: #1F2937;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 24px;
+            gap: 20px;
+        }
+
+        /* Phone Frame */
+        .phone {
+            width: 375px;
+            height: 780px;
+            background: var(--card);
+            border-radius: 44px;
+            overflow: hidden;
+            box-shadow: 
+                0 0 0 10px #374151,
+                0 0 0 12px #4B5563,
+                0 25px 50px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background: #374151;
+            border-radius: 0 0 16px 16px;
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 48px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .type-badge {
+            position: absolute;
+            top: 54px;
+            right: 12px;
+            padding: 3px 8px;
+            background: var(--primary);
+            color: white;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 500;
+            z-index: 50;
+        }
+
+        /* Header */
+        .header {
+            padding: 8px 16px 0;
+        }
+
+        .query-title {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+
+        .tab {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--text-2);
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 14px;
+            right: 14px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 1px;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px 16px;
+        }
+
+        .main::-webkit-scrollbar { display: none; }
+
+        /* ============================================
+           参数矩阵型
+           ============================================ */
+        .param-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .param-cell {
+            background: var(--card);
+            padding: 14px;
+        }
+
+        .param-label {
+            font-size: 12px;
+            color: var(--text-3);
+            margin-bottom: 6px;
+        }
+
+        .param-value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .param-value.highlight {
+            color: var(--primary);
+        }
+
+        .param-value .unit {
+            font-size: 12px;
+            font-weight: 400;
+            color: var(--text-2);
+            margin-left: 2px;
+        }
+
+        /* 特性列表 */
+        .feature-list {
+            margin-bottom: 14px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .feature-item:last-child { border-bottom: none; }
+
+        .feature-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .feature-content {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 2px;
+        }
+
+        .feature-desc {
+            font-size: 12px;
+            color: var(--text-3);
+        }
+
+        /* 选项卡片 */
+        .option-cards {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .option-card {
+            flex: 1;
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 12px 8px;
+            text-align: center;
+        }
+
+        .option-icon {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .option-name {
+            font-size: 12px;
+            color: var(--text-1);
+            margin-bottom: 4px;
+        }
+
+        .option-status {
+            font-size: 10px;
+            font-weight: 500;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .option-status.ban { background: var(--error-bg); color: var(--error); }
+        .option-status.warn { background: var(--warning-bg); color: var(--warning); }
+        .option-status.ok { background: var(--success-bg); color: var(--success); }
+
+        /* 操作列表 */
+        .action-list {
+            background: var(--bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .action-item:last-child { border-bottom: none; }
+
+        .action-name {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-1);
+        }
+
+        .action-tag {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .action-tag.required { background: var(--error-bg); color: var(--error); }
+        .action-tag.limited { background: var(--warning-bg); color: var(--warning); }
+        .action-tag.easy { background: var(--success-bg); color: var(--success); }
+
+        /* ============================================
+           焦点文字型
+           ============================================ */
+        .summary-card {
+            background: var(--primary-light);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+
+        .summary-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--primary);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .summary-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-1);
+        }
+
+        /* 核心观点引用 */
+        .quote-card {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        .quote-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--warning);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .quote-text {
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.6;
+            color: var(--text-1);
+            padding-left: 12px;
+            border-left: 3px solid var(--warning);
+        }
+
+        .quote-author {
+            font-size: 11px;
+            color: var(--text-3);
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        /* 核心要点 */
+        .keypoints {
+            margin-bottom: 14px;
+        }
+
+        .keypoints-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--success);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .keypoint-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .keypoint-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-top: 7px;
+            flex-shrink: 0;
+        }
+
+        .keypoint-label {
+            font-weight: 600;
+            color: var(--text-1);
+            margin-right: 4px;
+        }
+
+        /* 关键词标签 */
+        .keyword-section {
+            margin-bottom: 14px;
+        }
+
+        .keyword-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--warning);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .keyword-tag {
+            padding: 4px 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        /* ============================================
+           信息对比型
+           ============================================ */
+        .vs-card {
+            display: flex;
+            align-items: center;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .vs-side {
+            flex: 1;
+            text-align: center;
+        }
+
+        .vs-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 4px;
+        }
+
+        .vs-name.highlight {
+            color: var(--primary);
+        }
+
+        .vs-desc {
+            font-size: 12px;
+            color: var(--text-2);
+        }
+
+        .vs-badge {
+            width: 36px;
+            height: 36px;
+            background: var(--text-1);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            margin: 0 12px;
+            flex-shrink: 0;
+        }
+
+        /* 双列对比 */
+        .compare-cols {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .compare-col {
+            flex: 1;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 14px;
+            position: relative;
+        }
+
+        .compare-col.recommend {
+            border: 2px solid var(--primary);
+            background: var(--primary-light);
+        }
+
+        .compare-recommend-tag {
+            position: absolute;
+            top: -8px;
+            right: 10px;
+            padding: 2px 8px;
+            background: var(--primary);
+            color: white;
+            font-size: 10px;
+            font-weight: 500;
+            border-radius: 4px;
+        }
+
+        .compare-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .compare-icon {
+            font-size: 18px;
+        }
+
+        .compare-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .compare-list {
+            font-size: 12px;
+            color: var(--text-2);
+            line-height: 1.8;
+        }
+
+        /* 进度条 */
+        .progress-section {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+
+        .progress-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--success);
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-item:last-child { margin-bottom: 0; }
+
+        .progress-name {
+            width: 50px;
+            font-size: 12px;
+            color: var(--text-2);
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .progress-fill.cyan { background: var(--cyan); }
+        .progress-fill.warning { background: var(--warning); }
+        .progress-fill.primary { background: var(--primary); }
+
+        .progress-value {
+            width: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-1);
+            text-align: right;
+        }
+
+        /* 功能对比表 */
+        .feature-table {
+            background: var(--bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .feature-table-header {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 14px;
+            font-size: 12px;
+            color: var(--purple);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .feature-table-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .feature-table-row:last-child { border-bottom: none; }
+
+        .feature-table-name {
+            flex: 1;
+            font-size: 13px;
+            color: var(--text-2);
+        }
+
+        .feature-table-col {
+            width: 60px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .feature-table-col.header {
+            color: var(--text-1);
+        }
+
+        .feature-table-col .check { color: var(--success); }
+        .feature-table-col .cross { color: var(--text-3); }
+        .feature-table-col .highlight { color: var(--primary); font-weight: 600; }
+
+        /* ============================================
+           核心答案卡片
+           ============================================ */
+        .fact-card {
+            border: 2px solid var(--primary-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            background: var(--primary-light);
+            position: relative;
+        }
+
+        .fact-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: white;
+            border: 1px solid var(--primary-border);
+            border-radius: 14px;
+            font-size: 11px;
+            color: var(--primary);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .fact-answer {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-1);
+            line-height: 1.2;
+        }
+
+        .fact-answer.medium { font-size: 22px; }
+        .fact-answer.small { font-size: 18px; }
+
+        .fact-desc {
+            font-size: 12px;
+            color: var(--text-2);
+            margin-top: 6px;
+        }
+
+        .fact-copy {
+            position: absolute;
+            bottom: 14px;
+            right: 14px;
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* 底部导航 */
+        .bottom-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px 26px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .nav-input {
+            flex: 1;
+            margin: 0 10px;
+            padding: 8px 14px;
+            background: var(--bg);
+            border: none;
+            border-radius: 18px;
+            font-size: 12px;
+            color: var(--text-3);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================
+     样式1: 参数矩阵型 - HDMI 2.0 技术参数
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge">参数矩阵型</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">HDMI 2.0 支持多少刷新率</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- 参数矩阵 -->
+        <div class="param-grid">
+            <div class="param-cell">
+                <div class="param-label">4K 刷新率</div>
+                <div class="param-value highlight">60Hz<span class="unit">最高</span></div>
+            </div>
+            <div class="param-cell">
+                <div class="param-label">1080p 刷新率</div>
+                <div class="param-value">240Hz</div>
+            </div>
+            <div class="param-cell">
+                <div class="param-label">带宽</div>
+                <div class="param-value">18<span class="unit">Gbps</span></div>
+            </div>
+            <div class="param-cell">
+                <div class="param-label">2K 刷新率</div>
+                <div class="param-value">144Hz</div>
+            </div>
+        </div>
+
+        <!-- 特性列表 -->
+        <div class="feature-list">
+            <div class="feature-item">
+                <span class="feature-icon">🎮</span>
+                <div class="feature-content">
+                    <div class="feature-title">游戏场景</div>
+                    <div class="feature-desc">4K@60Hz 满足主机游戏，高刷需 2.1</div>
+                </div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🖥️</span>
+                <div class="feature-content">
+                    <div class="feature-title">办公场景</div>
+                    <div class="feature-desc">4K@60Hz 完全够用，显示清晰</div>
+                </div>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📺</span>
+                <div class="feature-content">
+                    <div class="feature-title">影音场景</div>
+                    <div class="feature-desc">支持 HDR10，电影片源足够</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 版本选择 -->
+        <div class="option-cards">
+            <div class="option-card">
+                <div class="option-icon">📺</div>
+                <div class="option-name">HDMI 1.4</div>
+                <div class="option-status ban">⊘ 已过时</div>
+            </div>
+            <div class="option-card">
+                <div class="option-icon">🔌</div>
+                <div class="option-name">HDMI 2.0</div>
+                <div class="option-status warn">△ 主流</div>
+            </div>
+            <div class="option-card">
+                <div class="option-icon">⚡</div>
+                <div class="option-name">HDMI 2.1</div>
+                <div class="option-status ok">✓ 推荐</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="搜索词搜索词" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     样式2: 焦点文字型 - 年假补偿规定
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge">焦点文字型</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">年假不休补偿的规定</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- 一句话总结 -->
+        <div class="summary-card">
+            <div class="summary-label">⭐ 一句话总结</div>
+            <div class="summary-text">
+                根据《职工带薪年休假条例》，单位因工作原因未安排职工休年假的，应按<strong>日工资的300%</strong>支付补偿。这是法定标准，适用于中国大陆所有企业。
+            </div>
+        </div>
+
+        <!-- 核心观点 -->
+        <div class="quote-card">
+            <div class="quote-label">💬 核心观点</div>
+            <div class="quote-text">
+                "300%补偿是法定最低标准，但前提是'因单位原因'且'职工同意'，否则单位无需支付"
+            </div>
+            <div class="quote-author">—— 劳动法专家 @法律解读</div>
+        </div>
+
+        <!-- 核心要点 -->
+        <div class="keypoints">
+            <div class="keypoints-label">📝 核心要点</div>
+            <div class="keypoint-item">
+                <div class="keypoint-dot"></div>
+                <div><span class="keypoint-label">补偿标准</span>日工资收入 × 300%</div>
+            </div>
+            <div class="keypoint-item">
+                <div class="keypoint-dot"></div>
+                <div><span class="keypoint-label">前提条件</span>因单位原因 + 职工本人同意</div>
+            </div>
+            <div class="keypoint-item">
+                <div class="keypoint-dot"></div>
+                <div><span class="keypoint-label">法规依据</span>国务院令第514号</div>
+            </div>
+        </div>
+
+        <!-- 关键词速读 -->
+        <div class="keyword-section">
+            <div class="keyword-label">🏷️ 关键词速读</div>
+            <div class="keyword-tags">
+                <span class="keyword-tag">#日工资300%</span>
+                <span class="keyword-tag">#单位原因</span>
+                <span class="keyword-tag">#职工同意</span>
+                <span class="keyword-tag">#现行有效</span>
+            </div>
+            <div style="font-size:13px;color:var(--text-2);line-height:1.6;">
+                如果是职工本人原因未休，单位无需支付300%补偿，建议具体情况咨询当地劳动部门。
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="搜索词搜索词" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     样式3: 信息对比型 - 鲸鱼是鱼类吗
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge">信息对比型</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">鲸鱼是鱼类吗</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- VS 对比卡 -->
+        <div class="vs-card">
+            <div class="vs-side">
+                <div class="vs-name">鲸鱼 🐋</div>
+                <div class="vs-desc">哺乳动物</div>
+            </div>
+            <div class="vs-badge">VS</div>
+            <div class="vs-side">
+                <div class="vs-name highlight">鱼类 🐟</div>
+                <div class="vs-desc">完全不同</div>
+            </div>
+        </div>
+
+        <!-- 双列对比 -->
+        <div class="compare-cols">
+            <div class="compare-col recommend">
+                <span class="compare-recommend-tag">正确分类</span>
+                <div class="compare-header">
+                    <span class="compare-icon">🐋</span>
+                    <span class="compare-title">鲸鱼（哺乳类）</span>
+                </div>
+                <div class="compare-list">
+                    用肺呼吸<br>
+                    胎生、哺乳<br>
+                    恒温动物<br>
+                    有毛发
+                </div>
+            </div>
+            <div class="compare-col">
+                <div class="compare-header">
+                    <span class="compare-icon">🐟</span>
+                    <span class="compare-title">鱼类</span>
+                </div>
+                <div class="compare-list">
+                    用鳃呼吸<br>
+                    卵生<br>
+                    变温动物<br>
+                    有鳞片
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能对比表 -->
+        <div class="feature-table">
+            <div class="feature-table-header">📊 生物特征对比</div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">特征</div>
+                <div class="feature-table-col header">鲸鱼</div>
+                <div class="feature-table-col header">鱼类</div>
+            </div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">呼吸方式</div>
+                <div class="feature-table-col"><span class="highlight">肺</span></div>
+                <div class="feature-table-col">鳃</div>
+            </div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">繁殖方式</div>
+                <div class="feature-table-col"><span class="highlight">胎生</span></div>
+                <div class="feature-table-col">卵生</div>
+            </div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">哺乳</div>
+                <div class="feature-table-col"><span class="check">✓</span></div>
+                <div class="feature-table-col"><span class="cross">✗</span></div>
+            </div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">恒温</div>
+                <div class="feature-table-col"><span class="check">✓</span></div>
+                <div class="feature-table-col"><span class="cross">✗</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="搜索词搜索词" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     样式4: 参数矩阵 + 进度条 - 中国有多少个省
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge">数据可视化</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">中国有多少个省</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- 核心答案 -->
+        <div class="fact-card">
+            <div class="fact-tag">✓ 官方统计</div>
+            <div class="fact-answer">23 个省</div>
+            <div class="fact-desc">省级行政区共 34 个</div>
+            <button class="fact-copy">📋</button>
+        </div>
+
+        <!-- 进度条可视化 -->
+        <div class="progress-section">
+            <div class="progress-label">🌐 省级行政区构成 (每100G)</div>
+            <div class="progress-item">
+                <span class="progress-name">省</span>
+                <div class="progress-bar">
+                    <div class="progress-fill primary" style="width:67%"></div>
+                </div>
+                <span class="progress-value">23个</span>
+            </div>
+            <div class="progress-item">
+                <span class="progress-name">自治区</span>
+                <div class="progress-bar">
+                    <div class="progress-fill warning" style="width:15%"></div>
+                </div>
+                <span class="progress-value">5个</span>
+            </div>
+            <div class="progress-item">
+                <span class="progress-name">直辖市</span>
+                <div class="progress-bar">
+                    <div class="progress-fill cyan" style="width:12%"></div>
+                </div>
+                <span class="progress-value">4个</span>
+            </div>
+            <div class="progress-item">
+                <span class="progress-name">特别行政区</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width:6%;background:#8B5CF6"></div>
+                </div>
+                <span class="progress-value">2个</span>
+            </div>
+        </div>
+
+        <!-- 功能对比表 -->
+        <div class="feature-table">
+            <div class="feature-table-header">📋 统计口径说明</div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">类型</div>
+                <div class="feature-table-col header">数量</div>
+                <div class="feature-table-col header">占比</div>
+            </div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">省（含台湾）</div>
+                <div class="feature-table-col"><span class="highlight">23</span></div>
+                <div class="feature-table-col">67.6%</div>
+            </div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">自治区</div>
+                <div class="feature-table-col">5</div>
+                <div class="feature-table-col">14.7%</div>
+            </div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">直辖市</div>
+                <div class="feature-table-col">4</div>
+                <div class="feature-table-col">11.8%</div>
+            </div>
+            <div class="feature-table-row">
+                <div class="feature-table-name">特别行政区</div>
+                <div class="feature-table-col">2</div>
+                <div class="feature-table-col">5.9%</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="搜索词搜索词" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     样式5: 操作列表型 - 非京籍购房资格
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge">条件清单型</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">非京籍能买北京房吗</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- 核心答案 -->
+        <div class="fact-card" style="background:#FFFBEB;border-color:#FDE68A;">
+            <div class="fact-tag" style="color:#D97706;border-color:#FDE68A;">⚠ 有条件</div>
+            <div class="fact-answer medium">可以购买</div>
+            <div class="fact-desc">需满足社保/个税等条件</div>
+            <button class="fact-copy">📋</button>
+        </div>
+
+        <!-- 条件列表 -->
+        <div class="action-list">
+            <div class="action-item">
+                <span class="action-name">连续5年社保/个税</span>
+                <span class="action-tag required">⊘ 必须满足</span>
+            </div>
+            <div class="action-item">
+                <span class="action-name">家庭名下无房</span>
+                <span class="action-tag required">⊘ 必须满足</span>
+            </div>
+            <div class="action-item">
+                <span class="action-name">限购1套住房</span>
+                <span class="action-tag limited">△ 限制条件</span>
+            </div>
+            <div class="action-item">
+                <span class="action-name">通州区双限政策</span>
+                <span class="action-tag limited">△ 额外要求</span>
+            </div>
+        </div>
+
+        <!-- 选项卡片 -->
+        <div class="option-cards">
+            <div class="option-card">
+                <div class="option-icon">🏠</div>
+                <div class="option-name">普通住宅</div>
+                <div class="option-status ok">✓ 可购买</div>
+            </div>
+            <div class="option-card">
+                <div class="option-icon">🏢</div>
+                <div class="option-name">商业公寓</div>
+                <div class="option-status ok">✓ 不限购</div>
+            </div>
+            <div class="option-card">
+                <div class="option-icon">🏘️</div>
+                <div class="option-name">通州住宅</div>
+                <div class="option-status warn">△ 更严格</div>
+            </div>
+        </div>
+
+        <!-- 关键词 -->
+        <div class="keyword-section">
+            <div class="keyword-label">🏷️ 关键词速读</div>
+            <div class="keyword-tags">
+                <span class="keyword-tag">#连续5年社保</span>
+                <span class="keyword-tag">#限购1套</span>
+                <span class="keyword-tag">#2024政策</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="搜索词搜索词" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     样式6: 混合型 - 邮编查询
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge">核心答案型</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">长宁区虹桥路的邮编</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- 核心答案 -->
+        <div class="fact-card">
+            <div class="fact-tag">✓ 邮政编码库</div>
+            <div class="fact-answer" style="font-family:monospace;letter-spacing:3px;">200051</div>
+            <div class="fact-desc">覆盖虹桥路主要路段</div>
+            <button class="fact-copy">📋</button>
+        </div>
+
+        <!-- 一句话总结 -->
+        <div class="summary-card">
+            <div class="summary-label">⭐ 一句话总结</div>
+            <div class="summary-text">
+                长宁区虹桥路的邮编因具体路段不同而有所差异，主要涉及 <strong>200051</strong> 等编码。若无法确定具体门牌号，200051 覆盖了虹桥路的主要路段。
+            </div>
+        </div>
+
+        <!-- 参数矩阵 -->
+        <div class="param-grid">
+            <div class="param-cell">
+                <div class="param-label">885-1191号</div>
+                <div class="param-value highlight">200051</div>
+            </div>
+            <div class="param-cell">
+                <div class="param-label">1378-2328号</div>
+                <div class="param-value">200336</div>
+            </div>
+            <div class="param-cell">
+                <div class="param-label">2360-5000号</div>
+                <div class="param-value">200335</div>
+            </div>
+            <div class="param-cell">
+                <div class="param-label">区号</div>
+                <div class="param-value">021</div>
+            </div>
+        </div>
+
+        <!-- 关键词 -->
+        <div class="keyword-section">
+            <div class="keyword-label">🏷️ 关键词速读</div>
+            <div class="keyword-tags">
+                <span class="keyword-tag">#上海长宁区</span>
+                <span class="keyword-tag">#虹桥路</span>
+                <span class="keyword-tag">#邮政编码</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="搜索词搜索词" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     样式7: 排行榜型 - 中国十大名牌大学
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="type-badge">排行榜型</div>
+    <div class="status-bar"><span>15:06</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">中国十大名牌大学</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- 核心答案 -->
+        <div class="fact-card">
+            <div class="fact-tag">✓ 2024年综合排名</div>
+            <div class="fact-answer medium">清华北大领衔</div>
+            <div class="fact-desc">基于 QS / 软科 / US News 综合评估</div>
+            <button class="fact-copy" onclick="this.innerHTML='✓';setTimeout(()=>this.innerHTML='📋',1500)">📋</button>
+        </div>
+
+        <!-- 排行榜列表 -->
+        <div class="rank-list">
+            <div class="rank-item gold" onclick="toggleRankDetail(this)">
+                <div class="rank-num">1</div>
+                <div class="rank-info">
+                    <div class="rank-name">清华大学</div>
+                    <div class="rank-meta">北京 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A+</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>综合排名</span><span>全国第1 / 世界第25</span>
+                    </div>
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>工科、计算机、建筑</span>
+                    </div>
+                    <div class="rank-detail-row">
+                        <span>录取分数</span><span>理科 695+ / 文科 680+</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item gold" onclick="toggleRankDetail(this)">
+                <div class="rank-num">2</div>
+                <div class="rank-info">
+                    <div class="rank-name">北京大学</div>
+                    <div class="rank-meta">北京 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A+</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>综合排名</span><span>全国第2 / 世界第17</span>
+                    </div>
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>文理、法学、经济</span>
+                    </div>
+                    <div class="rank-detail-row">
+                        <span>录取分数</span><span>理科 690+ / 文科 678+</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item silver" onclick="toggleRankDetail(this)">
+                <div class="rank-num">3</div>
+                <div class="rank-info">
+                    <div class="rank-name">浙江大学</div>
+                    <div class="rank-meta">杭州 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A+</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>综合排名</span><span>全国第3 / 世界第44</span>
+                    </div>
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>工科、农学、计算机</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item silver" onclick="toggleRankDetail(this)">
+                <div class="rank-num">4</div>
+                <div class="rank-info">
+                    <div class="rank-name">上海交通大学</div>
+                    <div class="rank-meta">上海 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A+</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>综合排名</span><span>全国第4 / 世界第46</span>
+                    </div>
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>工科、医学、商科</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item bronze" onclick="toggleRankDetail(this)">
+                <div class="rank-num">5</div>
+                <div class="rank-info">
+                    <div class="rank-name">复旦大学</div>
+                    <div class="rank-meta">上海 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>综合排名</span><span>全国第5 / 世界第50</span>
+                    </div>
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>文科、医学、新闻</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item" onclick="toggleRankDetail(this)">
+                <div class="rank-num">6</div>
+                <div class="rank-info">
+                    <div class="rank-name">南京大学</div>
+                    <div class="rank-meta">南京 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>天文、物理、文学</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item" onclick="toggleRankDetail(this)">
+                <div class="rank-num">7</div>
+                <div class="rank-info">
+                    <div class="rank-name">中国科学技术大学</div>
+                    <div class="rank-meta">合肥 · 理工 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>物理、化学、数学</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item" onclick="toggleRankDetail(this)">
+                <div class="rank-num">8</div>
+                <div class="rank-info">
+                    <div class="rank-name">华中科技大学</div>
+                    <div class="rank-meta">武汉 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>机械、电气、医学</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item" onclick="toggleRankDetail(this)">
+                <div class="rank-num">9</div>
+                <div class="rank-info">
+                    <div class="rank-name">武汉大学</div>
+                    <div class="rank-meta">武汉 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>测绘、法学、新闻</span>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-item" onclick="toggleRankDetail(this)">
+                <div class="rank-num">10</div>
+                <div class="rank-info">
+                    <div class="rank-name">西安交通大学</div>
+                    <div class="rank-meta">西安 · 综合 · 985/211/双一流</div>
+                </div>
+                <div class="rank-score">A</div>
+                <div class="rank-detail">
+                    <div class="rank-detail-row">
+                        <span>优势学科</span><span>能动、电气、管理</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 评分标准 -->
+        <div class="keyword-section">
+            <div class="keyword-label">📊 排名依据</div>
+            <div class="keyword-tags">
+                <span class="keyword-tag">#QS世界排名</span>
+                <span class="keyword-tag">#软科中国</span>
+                <span class="keyword-tag">#US News</span>
+                <span class="keyword-tag">#2024年数据</span>
+            </div>
+        </div>
+
+        <!-- 提示 -->
+        <div class="summary-card" style="background:#FFFBE6;">
+            <div class="summary-label" style="color:#D97706;">⚠️ 温馨提示</div>
+            <div class="summary-text" style="font-size:12px;color:#92400E;">
+                排名因评估机构、指标权重不同略有差异。以上综合多个权威榜单，仅供参考。实际选校需结合专业、地域、就业等因素。
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="中国十大名牌大学" readonly>
+        <button class="nav-btn">⊞</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+<style>
+/* 排行榜样式 */
+.rank-list {
+    margin-bottom: 14px;
+}
+
+.rank-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-wrap: wrap;
+}
+
+.rank-item:active {
+    transform: scale(0.98);
+}
+
+.rank-item.gold .rank-num {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    color: white;
+}
+
+.rank-item.silver .rank-num {
+    background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+    color: white;
+}
+
+.rank-item.bronze .rank-num {
+    background: linear-gradient(135deg, #CD7F32, #B8860B);
+    color: white;
+}
+
+.rank-num {
+    width: 28px;
+    height: 28px;
+    background: var(--primary-light);
+    color: var(--primary);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.rank-info {
+    flex: 1;
+    margin-left: 12px;
+}
+
+.rank-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-1);
+    margin-bottom: 2px;
+}
+
+.rank-meta {
+    font-size: 11px;
+    color: var(--text-3);
+}
+
+.rank-score {
+    padding: 4px 10px;
+    background: var(--primary);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.rank-detail {
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s, padding 0.3s;
+    background: white;
+    border-radius: 8px;
+    margin-top: 0;
+}
+
+.rank-item.expanded .rank-detail {
+    max-height: 200px;
+    padding: 10px 12px;
+    margin-top: 10px;
+}
+
+.rank-detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.rank-detail-row:last-child {
+    border-bottom: none;
+}
+
+.rank-detail-row span:first-child {
+    color: var(--text-3);
+}
+
+.rank-detail-row span:last-child {
+    color: var(--text-1);
+    font-weight: 500;
+}
+</style>
+
+<script>
+function toggleRankDetail(el) {
+    el.classList.toggle('expanded');
+}
+</script>
+
+</body>
+</html>

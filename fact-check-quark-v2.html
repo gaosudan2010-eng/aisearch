@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>事实核查 - 夸克风格 V2（核心答案前置）</title>
+    <style>
+        :root {
+            --primary: #6366F1;
+            --primary-light: #EEF2FF;
+            --primary-border: #C7D2FE;
+            --success: #00B578;
+            --success-bg: #E8F8F2;
+            --warning: #FF8F1F;
+            --warning-bg: #FFF7E8;
+            --error: #FA5151;
+            --error-bg: #FFEFEF;
+            --text-1: #1A1A1A;
+            --text-2: #666666;
+            --text-3: #999999;
+            --bg: #F5F5F5;
+            --card: #FFFFFF;
+            --border: #EEEEEE;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background: #1F2937;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            padding: 24px;
+            gap: 20px;
+        }
+
+        /* Phone Frame */
+        .phone {
+            width: 375px;
+            height: 780px;
+            background: var(--card);
+            border-radius: 44px;
+            overflow: hidden;
+            box-shadow: 
+                0 0 0 10px #374151,
+                0 0 0 12px #4B5563,
+                0 25px 50px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background: #374151;
+            border-radius: 0 0 16px 16px;
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 48px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .case-badge {
+            position: absolute;
+            top: 54px;
+            right: 12px;
+            padding: 3px 8px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 6px;
+            font-size: 9px;
+            font-weight: 500;
+            z-index: 50;
+        }
+
+        /* Header */
+        .header {
+            padding: 8px 16px 0;
+        }
+
+        .query-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 12px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin: 0 -16px;
+            padding: 0 16px;
+        }
+
+        .tab {
+            padding: 10px 16px;
+            font-size: 14px;
+            color: var(--text-2);
+            position: relative;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 16px;
+            right: 16px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 1px;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+        }
+
+        .main::-webkit-scrollbar { display: none; }
+
+        /* Source Header */
+        .source-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .source-icon {
+            font-size: 16px;
+        }
+
+        .source-text {
+            font-size: 13px;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .source-arrow {
+            color: var(--text-3);
+            font-size: 12px;
+        }
+
+        /* ============================================
+           核心答案卡片 - 前置强调
+           ============================================ */
+        .fact-card {
+            border: 2px solid var(--primary-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            background: var(--primary-light);
+            position: relative;
+        }
+
+        .fact-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: white;
+            border: 1px solid var(--primary-border);
+            border-radius: 14px;
+            font-size: 11px;
+            color: var(--primary);
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .fact-tag .icon {
+            font-size: 12px;
+        }
+
+        .fact-answer {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--text-1);
+            line-height: 1.2;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            letter-spacing: -0.5px;
+        }
+
+        .fact-answer.medium {
+            font-size: 28px;
+        }
+
+        .fact-answer.small {
+            font-size: 22px;
+        }
+
+        .fact-answer.code {
+            font-family: "SF Mono", "Menlo", monospace;
+            letter-spacing: 2px;
+        }
+
+        .fact-desc {
+            font-size: 13px;
+            color: var(--text-2);
+            margin-top: 6px;
+        }
+
+        .fact-copy {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .fact-copy:active {
+            background: var(--bg);
+        }
+
+        .fact-copy.copied {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        /* Yes/No 卡片变体 */
+        .fact-card.yes {
+            background: #F0FDF4;
+            border-color: #86EFAC;
+        }
+
+        .fact-card.yes .fact-tag {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .fact-card.no {
+            background: #FEF2F2;
+            border-color: #FECACA;
+        }
+
+        .fact-card.no .fact-tag {
+            background: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        .fact-card.partial {
+            background: #FFFBEB;
+            border-color: #FDE68A;
+        }
+
+        .fact-card.partial .fact-tag {
+            background: var(--warning);
+            border-color: var(--warning);
+            color: white;
+        }
+
+        /* Answer Content */
+        .answer-content {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-1);
+        }
+
+        .answer-para {
+            margin-bottom: 10px;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* 列表 */
+        .answer-list {
+            margin: 8px 0;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .answer-list li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .answer-list li::before {
+            content: '•';
+            color: var(--text-3);
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        /* 来源角标 */
+        .ref {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 14px;
+            height: 14px;
+            padding: 0 3px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 10px;
+            font-weight: 500;
+            border-radius: 3px;
+            margin-left: 2px;
+            vertical-align: super;
+        }
+
+        /* 数据表格 */
+        .data-rows {
+            background: var(--bg);
+            border-radius: 10px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .data-row {
+            display: flex;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .data-row:last-child { border-bottom: none; }
+
+        .data-label {
+            width: 90px;
+            color: var(--text-2);
+            flex-shrink: 0;
+        }
+
+        .data-value {
+            flex: 1;
+            color: var(--text-1);
+            font-weight: 500;
+        }
+
+        .data-value.hl {
+            color: var(--primary);
+        }
+
+        /* 提示框 */
+        .tip-box {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px 12px;
+            background: #FFFBE6;
+            border-radius: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: #8B6914;
+            line-height: 1.5;
+        }
+
+        .tip-box.info {
+            background: var(--primary-light);
+            color: #4338CA;
+        }
+
+        /* 法规引用 */
+        .law-quote {
+            background: #FAFAFA;
+            border-left: 3px solid var(--primary);
+            padding: 10px 12px;
+            margin: 10px 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-2);
+        }
+
+        .law-quote .title {
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 4px;
+        }
+
+        /* AI Footer */
+        .ai-footer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-3);
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* 操作栏 */
+        .action-bar {
+            display: flex;
+            align-items: center;
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+            background: var(--card);
+        }
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 10px;
+            border: none;
+            background: transparent;
+            font-size: 12px;
+            color: var(--text-2);
+            cursor: pointer;
+        }
+
+        .action-btn:active { opacity: 0.7; }
+
+        .action-divider {
+            width: 1px;
+            height: 16px;
+            background: var(--border);
+            margin: 0 2px;
+        }
+
+        /* 底部导航 */
+        .bottom-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 16px 24px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+        }
+
+        .nav-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .nav-input {
+            flex: 1;
+            margin: 0 12px;
+            padding: 8px 16px;
+            background: var(--bg);
+            border: none;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-1);
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================
+     B2: 邮编查询
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="case-badge">B2 编码类</div>
+    <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">长宁区虹桥路的邮编</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 5 篇搜索来源回答</span>
+            <span class="source-arrow">›</span>
+        </div>
+
+        <!-- 核心答案前置 -->
+        <div class="fact-card">
+            <div class="fact-tag">
+                <span class="icon">✓</span>
+                <span>邮政编码库</span>
+            </div>
+            <div class="fact-answer code">200051</div>
+            <div class="fact-desc">覆盖虹桥路主要路段</div>
+            <button class="fact-copy" onclick="copyFact(this, '200051')">📋</button>
+        </div>
+
+        <div class="answer-content">
+            <p class="answer-para">
+                长宁区虹桥路的邮编因具体路段不同而有所差异，主要涉及 <span class="highlight">200051</span> 等编码。若无法确定具体门牌号，200051 覆盖了虹桥路的主要路段。
+            </p>
+
+            <div class="data-rows">
+                <div class="data-row">
+                    <span class="data-label">885-1191号</span>
+                    <span class="data-value hl">200051</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">1378-2328号</span>
+                    <span class="data-value">200336</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">2360-5000号</span>
+                    <span class="data-value">200335</span>
+                </div>
+            </div>
+
+            <div class="tip-box info">
+                <span>💡</span>
+                <span>建议通过上海长宁区政府官网或邮编查询工具进一步核实<span class="ref">7</span></span>
+            </div>
+
+            <div class="ai-footer">以上内容由 AI 生成</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="action-btn">🔄</button>
+        <button class="action-btn">📋</button>
+        <button class="action-btn">🔊</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">↗️ 分享</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">👍</button>
+        <button class="action-btn">👎</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="长宁区虹桥路的邮编" readonly>
+        <button class="nav-btn">🎙</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     A1: 国庆节日期
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="case-badge">A1 固定时间点</div>
+    <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">国庆节是哪一天</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 8 篇官方来源</span>
+            <span class="source-arrow">›</span>
+        </div>
+
+        <div class="fact-card">
+            <div class="fact-tag">
+                <span class="icon">✓</span>
+                <span>法定节假日</span>
+            </div>
+            <div class="fact-answer">10月1日</div>
+            <div class="fact-desc">每年固定日期，不随年份变化</div>
+            <button class="fact-copy" onclick="copyFact(this, '10月1日')">📋</button>
+        </div>
+
+        <div class="answer-content">
+            <p class="answer-para">
+                中华人民共和国国庆节是每年的 <span class="highlight">10月1日</span>，这是一个固定日期的法定节假日<span class="ref">1</span>。
+            </p>
+
+            <div class="data-rows">
+                <div class="data-row">
+                    <span class="data-label">节日名称</span>
+                    <span class="data-value">国庆节</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">日期</span>
+                    <span class="data-value hl">10月1日</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">设立时间</span>
+                    <span class="data-value">1949年12月</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">法定假期</span>
+                    <span class="data-value">3天（含调休共7天）</span>
+                </div>
+            </div>
+
+            <div class="ai-footer">以上内容由 AI 生成</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="action-btn">🔄</button>
+        <button class="action-btn">📋</button>
+        <button class="action-btn">🔊</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">↗️ 分享</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">👍</button>
+        <button class="action-btn">👎</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="国庆节是哪一天" readonly>
+        <button class="nav-btn">🎙</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     D1: 鲸鱼是鱼类吗
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="case-badge">D1 概念归属</div>
+    <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">鲸鱼是鱼类吗</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 12 篇科学文献</span>
+            <span class="source-arrow">›</span>
+        </div>
+
+        <div class="fact-card no">
+            <div class="fact-tag">
+                <span class="icon">✗</span>
+                <span>否</span>
+            </div>
+            <div class="fact-answer medium">不是鱼类</div>
+            <div class="fact-desc">鲸鱼是哺乳动物</div>
+            <button class="fact-copy" onclick="copyFact(this, '鲸鱼不是鱼类，是哺乳动物')">📋</button>
+        </div>
+
+        <div class="answer-content">
+            <p class="answer-para">
+                虽然名字里有"鱼"，但鲸鱼在生物分类上属于<span class="highlight">哺乳纲鲸目</span>，与鱼类有本质区别<span class="ref">1</span><span class="ref">2</span>。
+            </p>
+
+            <div class="data-rows">
+                <div class="data-row">
+                    <span class="data-label">生物分类</span>
+                    <span class="data-value hl">哺乳纲 · 鲸目</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">呼吸方式</span>
+                    <span class="data-value">用肺呼吸</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">繁殖方式</span>
+                    <span class="data-value">胎生、哺乳</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">体温</span>
+                    <span class="data-value">恒温动物</span>
+                </div>
+            </div>
+
+            <p class="answer-para" style="margin-top:10px;font-weight:600;font-size:14px;">与鱼类的区别：</p>
+            <ul class="answer-list">
+                <li>鱼类用鳃呼吸，鲸鱼用肺呼吸</li>
+                <li>鱼类是卵生，鲸鱼是胎生且哺乳</li>
+                <li>鱼类是变温动物，鲸鱼是恒温动物</li>
+            </ul>
+
+            <div class="ai-footer">以上内容由 AI 生成</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="action-btn">🔄</button>
+        <button class="action-btn">📋</button>
+        <button class="action-btn">🔊</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">↗️ 分享</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">👍</button>
+        <button class="action-btn">👎</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="鲸鱼是鱼类吗" readonly>
+        <button class="nav-btn">🎙</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     C2: 中国有多少个省
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="case-badge">C2 统计数值</div>
+    <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">中国有多少个省</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于民政部官方数据</span>
+            <span class="source-arrow">›</span>
+        </div>
+
+        <div class="fact-card">
+            <div class="fact-tag">
+                <span class="icon">✓</span>
+                <span>官方统计</span>
+            </div>
+            <div class="fact-answer">23 个省</div>
+            <div class="fact-desc">省级行政区共 34 个</div>
+            <button class="fact-copy" onclick="copyFact(this, '23个省')">📋</button>
+        </div>
+
+        <div class="answer-content">
+            <p class="answer-para">
+                中国共有 <span class="highlight">23 个省</span>，省级行政区共 34 个<span class="ref">1</span>。
+            </p>
+
+            <div class="data-rows">
+                <div class="data-row">
+                    <span class="data-label">省</span>
+                    <span class="data-value hl">23 个</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">自治区</span>
+                    <span class="data-value">5 个</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">直辖市</span>
+                    <span class="data-value">4 个</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">特别行政区</span>
+                    <span class="data-value">2 个</span>
+                </div>
+                <div class="data-row" style="background:#EEF2FF;">
+                    <span class="data-label">合计</span>
+                    <span class="data-value hl">34 个省级行政区</span>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <span>📊</span>
+                <span><strong>统计口径</strong>：23个省包含台湾省。数据来源：国家民政部（2024年）</span>
+            </div>
+
+            <div class="ai-footer">以上内容由 AI 生成</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="action-btn">🔄</button>
+        <button class="action-btn">📋</button>
+        <button class="action-btn">🔊</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">↗️ 分享</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">👍</button>
+        <button class="action-btn">👎</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="中国有多少个省" readonly>
+        <button class="nav-btn">🎙</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     E1: 年假补偿规定
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="case-badge">E1 法规政策</div>
+    <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">年假不休补偿的规定</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于国务院法规</span>
+            <span class="source-arrow">›</span>
+        </div>
+
+        <div class="fact-card">
+            <div class="fact-tag">
+                <span class="icon">⚖️</span>
+                <span>法定标准</span>
+            </div>
+            <div class="fact-answer medium">日工资 × 300%</div>
+            <div class="fact-desc">未休年假每日补偿标准</div>
+            <button class="fact-copy" onclick="copyFact(this, '日工资×300%')">📋</button>
+        </div>
+
+        <div class="answer-content">
+            <p class="answer-para">
+                根据《职工带薪年休假条例》规定，单位因工作原因未安排职工休年假的，需按 <span class="highlight">日工资的300%</span> 支付补偿<span class="ref">1</span>。
+            </p>
+
+            <div class="law-quote">
+                <div class="title">《职工带薪年休假条例》第五条</div>
+                单位应当按照该职工日工资收入的 <strong>300%</strong> 支付年休假工资报酬。
+            </div>
+
+            <div class="data-rows">
+                <div class="data-row">
+                    <span class="data-label">补偿标准</span>
+                    <span class="data-value hl">日工资 × 300%</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">前提条件</span>
+                    <span class="data-value">因单位原因+职工同意</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">法规依据</span>
+                    <span class="data-value">国务院令第514号</span>
+                </div>
+            </div>
+
+            <div class="tip-box">
+                <span>⚠️</span>
+                <span>若职工本人原因未休，单位无需支付300%补偿</span>
+            </div>
+
+            <div class="ai-footer">以上内容由 AI 生成</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="action-btn">🔄</button>
+        <button class="action-btn">📋</button>
+        <button class="action-btn">🔊</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">↗️ 分享</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">👍</button>
+        <button class="action-btn">👎</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="年假不休补偿的规定" readonly>
+        <button class="nav-btn">🎙</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     H1: 非京籍购房资格
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="case-badge">H1 资格判断</div>
+    <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">非京籍能买北京房吗</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 9 篇政策来源</span>
+            <span class="source-arrow">›</span>
+        </div>
+
+        <div class="fact-card partial">
+            <div class="fact-tag">
+                <span class="icon">⚠</span>
+                <span>有条件</span>
+            </div>
+            <div class="fact-answer medium">可以购买</div>
+            <div class="fact-desc">需满足社保/个税等条件</div>
+            <button class="fact-copy" onclick="copyFact(this, '非京籍满足条件可买房')">📋</button>
+        </div>
+
+        <div class="answer-content">
+            <p class="answer-para">
+                非京籍家庭<span class="highlight">满足条件后可以购买</span>北京住房<span class="ref">1</span>。需同时满足以下条件：
+            </p>
+
+            <ul class="answer-list">
+                <li><strong>社保/个税</strong>：连续 5 年在京缴纳<span class="ref">3</span></li>
+                <li><strong>家庭名下无房</strong>：家庭成员在京无住房</li>
+                <li><strong>限购套数</strong>：非京籍家庭限购 1 套</li>
+            </ul>
+
+            <div class="tip-box">
+                <span>⚠️</span>
+                <span><strong>特别注意</strong>：通州区执行更严格的"双限"政策<span class="ref">5</span></span>
+            </div>
+
+            <div class="ai-footer">以上内容由 AI 生成</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="action-btn">🔄</button>
+        <button class="action-btn">📋</button>
+        <button class="action-btn">🔊</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">↗️ 分享</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">👍</button>
+        <button class="action-btn">👎</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="非京籍能买北京房吗" readonly>
+        <button class="nav-btn">🎙</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     F1: HDMI 2.0 刷新率
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="case-badge">F1 技术参数</div>
+    <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">HDMI 2.0 支持多少刷新率</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">基于 HDMI 官方规格</span>
+            <span class="source-arrow">›</span>
+        </div>
+
+        <div class="fact-card">
+            <div class="fact-tag">
+                <span class="icon">✓</span>
+                <span>行业标准</span>
+            </div>
+            <div class="fact-answer">4K @ 60Hz</div>
+            <div class="fact-desc">HDMI 2.0 最高支持规格</div>
+            <button class="fact-copy" onclick="copyFact(this, '4K@60Hz')">📋</button>
+        </div>
+
+        <div class="answer-content">
+            <p class="answer-para">
+                HDMI 2.0 带宽为 18 Gbps，最高支持 <span class="highlight">4K @ 60Hz</span><span class="ref">1</span>。
+            </p>
+
+            <div class="data-rows">
+                <div class="data-row">
+                    <span class="data-label">4K</span>
+                    <span class="data-value hl">最高 60Hz</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">2K (1440p)</span>
+                    <span class="data-value">最高 144Hz</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">1080p</span>
+                    <span class="data-value">最高 240Hz</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">总带宽</span>
+                    <span class="data-value">18 Gbps</span>
+                </div>
+            </div>
+
+            <p class="answer-para" style="margin-top:10px;font-weight:600;font-size:14px;">版本对比：</p>
+            <ul class="answer-list">
+                <li>HDMI 1.4：4K @ 30Hz</li>
+                <li><strong>HDMI 2.0：4K @ 60Hz</strong></li>
+                <li>HDMI 2.1：4K @ 120Hz / 8K @ 60Hz</li>
+            </ul>
+
+            <div class="ai-footer">以上内容由 AI 生成</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="action-btn">🔄</button>
+        <button class="action-btn">📋</button>
+        <button class="action-btn">🔊</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">↗️ 分享</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">👍</button>
+        <button class="action-btn">👎</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="HDMI 2.0 支持多少刷新率" readonly>
+        <button class="nav-btn">🎙</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<!-- ================================================================
+     C1: 金额大写
+     ================================================================ -->
+<div class="phone">
+    <div class="notch"></div>
+    <div class="case-badge">C1 数学转换</div>
+    <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+    
+    <div class="header">
+        <div class="query-title">50528.80 的大写</div>
+        <div class="tabs">
+            <div class="tab active">全部</div>
+            <div class="tab">图片</div>
+            <div class="tab">经验</div>
+            <div class="tab">资讯</div>
+            <div class="tab">文档</div>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="source-header">
+            <span class="source-icon">✨</span>
+            <span class="source-text">按银行票据规范转换</span>
+            <span class="source-arrow">›</span>
+        </div>
+
+        <div class="fact-card">
+            <div class="fact-tag">
+                <span class="icon">✓</span>
+                <span>人民币大写</span>
+            </div>
+            <div class="fact-answer small" style="line-height:1.4;">伍万零伍佰贰拾捌元捌角整</div>
+            <div class="fact-desc">原金额：¥50,528.80</div>
+            <button class="fact-copy" onclick="copyFact(this, '伍万零伍佰贰拾捌元捌角整')">📋</button>
+        </div>
+
+        <div class="answer-content">
+            <div class="data-rows">
+                <div class="data-row">
+                    <span class="data-label">原金额</span>
+                    <span class="data-value">¥50,528.80</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">整数部分</span>
+                    <span class="data-value">伍万零伍佰贰拾捌元</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">小数部分</span>
+                    <span class="data-value">捌角整</span>
+                </div>
+            </div>
+
+            <div class="tip-box info">
+                <span>💡</span>
+                <span>依据《中国人民银行票据填写规范》，用于财务、发票、支票等正式场合</span>
+            </div>
+
+            <div class="ai-footer">以上内容由 AI 生成</div>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button class="action-btn">🔄</button>
+        <button class="action-btn">📋</button>
+        <button class="action-btn">🔊</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">↗️ 分享</button>
+        <div class="action-divider"></div>
+        <button class="action-btn">👍</button>
+        <button class="action-btn">👎</button>
+    </div>
+
+    <div class="bottom-nav">
+        <button class="nav-btn">◀</button>
+        <button class="nav-btn">🗂</button>
+        <input class="nav-input" value="50528.80 的大写" readonly>
+        <button class="nav-btn">🎙</button>
+        <button class="nav-btn">≡</button>
+    </div>
+</div>
+
+
+<script>
+    function copyFact(btn, text) {
+        navigator.clipboard.writeText(text).then(() => {
+            btn.innerHTML = '✓';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = '📋';
+                btn.classList.remove('copied');
+            }, 1500);
+        });
+    }
+</script>
+
+</body>
+</html>

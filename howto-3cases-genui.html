@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 搜索 - 3 Cases Generative UI</title>
+    <style>
+        /* ============================================
+           CSS Variables
+           ============================================ */
+        :root {
+            --primary: #3370FF;
+            --primary-bg: #EDF4FF;
+            --success: #00B578;
+            --success-bg: #E8F8F2;
+            --warning: #FF8F1F;
+            --warning-bg: #FFF7E8;
+            --error: #FA5151;
+            --error-bg: #FFEFEF;
+            --purple: #8B5CF6;
+            --purple-bg: #F3EFFE;
+            
+            --text-1: #111827;
+            --text-2: #4B5563;
+            --text-3: #9CA3AF;
+            --bg: #F5F7FA;
+            --card: #FFFFFF;
+            --border: #E5E7EB;
+            --radius: 14px;
+            --radius-sm: 10px;
+            --shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+            background: #E5E7EB;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            min-height: 100vh;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* ============================================
+           Phone Frame
+           ============================================ */
+        .phone {
+            width: 375px;
+            height: 800px;
+            background: var(--bg);
+            border-radius: 44px;
+            overflow: hidden;
+            box-shadow: 
+                0 0 0 10px #1F2937,
+                0 0 0 12px #374151,
+                0 25px 50px rgba(0,0,0,0.25);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 32px;
+            background: #1F2937;
+            border-radius: 0 0 18px 18px;
+            z-index: 100;
+        }
+
+        .status-bar {
+            height: 50px;
+            padding: 0 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-bottom: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+            background: var(--card);
+        }
+
+        .case-label {
+            position: absolute;
+            top: 56px;
+            left: 16px;
+            padding: 4px 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 500;
+            z-index: 50;
+        }
+
+        /* ============================================
+           Header
+           ============================================ */
+        .header {
+            background: var(--card);
+            padding: 10px 16px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .query-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-1);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .query-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 500;
+        }
+
+        .tag.primary { background: var(--primary-bg); color: var(--primary); }
+        .tag.success { background: var(--success-bg); color: var(--success); }
+        .tag.warning { background: var(--warning-bg); color: var(--warning); }
+        .tag.purple { background: var(--purple-bg); color: var(--purple); }
+
+        /* ============================================
+           Main Content
+           ============================================ */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            padding-bottom: 16px;
+        }
+
+        .main::-webkit-scrollbar { display: none; }
+
+        /* ============================================
+           AI Header
+           ============================================ */
+        .ai-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .ai-avatar {
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            border-radius: 5px;
+        }
+
+        .ai-label {
+            font-size: 11px;
+            color: var(--text-3);
+        }
+
+        .ai-status {
+            margin-left: auto;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        /* ============================================
+           Cards
+           ============================================ */
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .card-icon.primary { background: var(--primary-bg); }
+        .card-icon.success { background: var(--success-bg); }
+        .card-icon.warning { background: var(--warning-bg); }
+        .card-icon.purple { background: var(--purple-bg); }
+
+        .card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-1);
+        }
+
+        .card-body {
+            padding: 12px 14px;
+        }
+
+        /* ============================================
+           Summary Card
+           ============================================ */
+        .summary-card {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            border-radius: var(--radius);
+            padding: 14px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+
+        .summary-text {
+            font-size: 13px;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+
+        /* ============================================
+           Flow Steps
+           ============================================ */
+        .flow-step {
+            display: flex;
+            gap: 10px;
+            position: relative;
+            padding-bottom: 12px;
+        }
+
+        .flow-step:last-child { padding-bottom: 0; }
+
+        .flow-step::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 22px;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .flow-step:last-child::before { display: none; }
+
+        .flow-num {
+            width: 22px;
+            height: 22px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 600;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+
+        .flow-num.done { background: var(--success); }
+        .flow-num.warn { background: var(--warning); }
+
+        .flow-content { flex: 1; }
+
+        .flow-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 2px;
+        }
+
+        .flow-desc {
+            font-size: 11px;
+            color: var(--text-2);
+            line-height: 1.5;
+        }
+
+        /* ============================================
+           Diff Component
+           ============================================ */
+        .diff-container {
+            display: flex;
+            gap: 6px;
+        }
+
+        .diff-column {
+            flex: 1;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .diff-header {
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .diff-column.before .diff-header {
+            background: var(--error-bg);
+            color: var(--error);
+        }
+
+        .diff-column.after .diff-header {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .diff-body {
+            padding: 10px;
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        .diff-column.before .diff-body {
+            background: #FFF5F5;
+            color: #991B1B;
+        }
+
+        .diff-column.after .diff-body {
+            background: #F0FDF4;
+            color: #166534;
+        }
+
+        /* ============================================
+           Tips
+           ============================================ */
+        .tip-card {
+            display: flex;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .tip-card:last-child { margin-bottom: 0; }
+
+        .tip-card.info { background: var(--primary-bg); color: #2563EB; }
+        .tip-card.success { background: var(--success-bg); color: #047857; }
+        .tip-card.warning { background: var(--warning-bg); color: #B45309; }
+        .tip-card.error { background: var(--error-bg); color: #DC2626; }
+
+        /* ============================================
+           Tabs
+           ============================================ */
+        .tabs-header {
+            display: flex;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            gap: 3px;
+            margin-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px 6px;
+            border: none;
+            background: transparent;
+            border-radius: 7px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-3);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* ============================================
+           Code Block
+           ============================================ */
+        .code-block {
+            background: #1E1E1E;
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            margin: 8px 0;
+            position: relative;
+        }
+
+        .code-text {
+            font-family: "SF Mono", "Menlo", monospace;
+            font-size: 11px;
+            color: #D4D4D4;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+
+        .code-copy {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            padding: 3px 8px;
+            background: rgba(255,255,255,0.1);
+            color: #A0A0A0;
+            border: none;
+            border-radius: 4px;
+            font-size: 9px;
+            cursor: pointer;
+        }
+
+        .code-copy.copied {
+            background: var(--success);
+            color: white;
+        }
+
+        /* ============================================
+           Carousel
+           ============================================ */
+        .carousel {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            padding: 2px;
+            margin: 0 -14px;
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+
+        .carousel::-webkit-scrollbar { display: none; }
+
+        .carousel-item {
+            min-width: 140px;
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            scroll-snap-align: start;
+            flex-shrink: 0;
+        }
+
+        .carousel-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 4px;
+        }
+
+        .carousel-desc {
+            font-size: 10px;
+            color: var(--text-2);
+            line-height: 1.4;
+        }
+
+        /* ============================================
+           Checklist
+           ============================================ */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .checklist-item:last-child { border-bottom: none; }
+
+        .check-box {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            font-size: 10px;
+        }
+
+        .checklist-item.checked .check-box {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .checklist-item.checked .check-box::after {
+            content: '✓';
+        }
+
+        .check-label {
+            font-size: 12px;
+            color: var(--text-1);
+            line-height: 1.4;
+        }
+
+        .checklist-item.checked .check-label {
+            color: var(--text-3);
+            text-decoration: line-through;
+        }
+
+        /* ============================================
+           Metric Grid
+           ============================================ */
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .metric-item {
+            background: var(--bg);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 2px;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            color: var(--text-3);
+        }
+
+        /* ============================================
+           Table
+           ============================================ */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .data-table th {
+            background: var(--bg);
+            padding: 8px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-2);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table td {
+            padding: 8px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-1);
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* ============================================
+           Bottom Actions
+           ============================================ */
+        .bottom-actions {
+            padding: 10px 12px;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .action-btn:active { opacity: 0.8; }
+
+        .action-btn.primary { background: var(--primary); color: white; }
+        .action-btn.secondary { background: var(--bg); color: var(--text-2); }
+
+        /* ============================================
+           Toast
+           ============================================ */
+        .toast {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 16px;
+            font-size: 11px;
+            opacity: 0;
+            transition: all 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ================================================================
+     Case 1: vlookup可以多列匹配吗
+     ================================================================ -->
+<div class="phone" id="phone1">
+    <div class="notch"></div>
+    <div class="case-label">Case 1: Excel 技术</div>
+    
+    <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+    </div>
+
+    <div class="header">
+        <div class="query-title">vlookup 可以多列匹配吗</div>
+        <div class="query-tags">
+            <span class="tag primary">教程</span>
+            <span class="tag success">Excel</span>
+            <span class="tag purple">技术</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="ai-header">
+            <div class="ai-avatar"></div>
+            <span class="ai-label">AI 回答</span>
+            <span class="ai-status">已完成</span>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-card">
+            <div class="summary-label">💡 核心回答</div>
+            <div class="summary-text">可以！有 4 种方法，从辅助列到 XLOOKUP，选对用法 Excel 会乖得像被点名一样 😄</div>
+        </div>
+
+        <!-- Tabs for Methods -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon primary">📋</div>
+                <div class="card-title">4 种方法对比</div>
+            </div>
+            <div class="card-body">
+                <div class="tabs-header">
+                    <button class="tab-btn active" onclick="switchTab1(0)">辅助列</button>
+                    <button class="tab-btn" onclick="switchTab1(1)">CHOOSE</button>
+                    <button class="tab-btn" onclick="switchTab1(2)">INDEX</button>
+                    <button class="tab-btn" onclick="switchTab1(3)">XLOOKUP</button>
+                </div>
+
+                <!-- Tab 0: 辅助列 -->
+                <div class="tab-panel active" id="case1-tab-0">
+                    <div class="tip-card success">
+                        <span>✅</span>
+                        <span><strong>最推荐！</strong> 稳定、易懂，适合日常办公</span>
+                    </div>
+                    <p style="font-size:11px;color:var(--text-2);margin:8px 0;">思路：把多列拼成一列，再 VLOOKUP</p>
+                    <div class="code-block">
+                        <code class="code-text">=A2&B2  // 新增辅助列
+=VLOOKUP(E2&F2, A:C, 3, 0)</code>
+                        <button class="code-copy" onclick="copyCode(this)">复制</button>
+                    </div>
+                </div>
+
+                <!-- Tab 1: CHOOSE -->
+                <div class="tab-panel" id="case1-tab-1">
+                    <div class="tip-card info">
+                        <span>💡</span>
+                        <span>不用改原表结构，但公式略"魔法"</span>
+                    </div>
+                    <div class="code-block">
+                        <code class="code-text">=VLOOKUP(E2&F2, 
+  CHOOSE({1,2}, 
+    A2:A100&B2:B100, 
+    C2:C100), 
+  2, 0)</code>
+                        <button class="code-copy" onclick="copyCode(this)">复制</button>
+                    </div>
+                </div>
+
+                <!-- Tab 2: INDEX+MATCH -->
+                <div class="tab-panel" id="case1-tab-2">
+                    <div class="tip-card warning">
+                        <span>⚠️</span>
+                        <span>老版 Excel 需要 Ctrl+Shift+Enter</span>
+                    </div>
+                    <div class="code-block">
+                        <code class="code-text">=INDEX(C:C, 
+  MATCH(1, 
+    (A:A=E2)*(B:B=F2), 
+    0))</code>
+                        <button class="code-copy" onclick="copyCode(this)">复制</button>
+                    </div>
+                </div>
+
+                <!-- Tab 3: XLOOKUP -->
+                <div class="tab-panel" id="case1-tab-3">
+                    <div class="tip-card success">
+                        <span>👑</span>
+                        <span><strong>王者方案！</strong> 新 Excel 专属，最优雅</span>
+                    </div>
+                    <div class="code-block">
+                        <code class="code-text">=XLOOKUP(1, 
+  (A:A=E2)*(B:B=F2), 
+  C:C)</code>
+                        <button class="code-copy" onclick="copyCode(this)">复制</button>
+                    </div>
+                    <div style="font-size:10px;color:var(--text-3);margin-top:8px;">✓ 原生多条件 ✓ 不需辅助列 ✓ 不用数组快捷键</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Selection Table -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon success">🧭</div>
+                <div class="card-title">快速选型建议</div>
+            </div>
+            <div class="card-body" style="padding:0;">
+                <table class="data-table">
+                    <tr>
+                        <th>场景</th>
+                        <th>推荐方法</th>
+                    </tr>
+                    <tr>
+                        <td>日常办公 / 给同事</td>
+                        <td><strong style="color:var(--success)">辅助列</strong></td>
+                    </tr>
+                    <tr>
+                        <td>表不能改</td>
+                        <td><strong>CHOOSE</strong></td>
+                    </tr>
+                    <tr>
+                        <td>技术流</td>
+                        <td><strong>INDEX+MATCH</strong></td>
+                    </tr>
+                    <tr>
+                        <td>新 Excel</td>
+                        <td><strong style="color:var(--primary)">XLOOKUP 👑</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-actions">
+        <button class="action-btn secondary" onclick="showToast('phone1', '正在重新生成...')">🔄 重新生成</button>
+        <button class="action-btn primary" onclick="showToast('phone1', '请输入你的表结构...')">💬 继续追问</button>
+    </div>
+
+    <div class="toast" id="toast1"></div>
+</div>
+
+
+<!-- ================================================================
+     Case 2: 直播货物线下领取店怎么开
+     ================================================================ -->
+<div class="phone" id="phone2">
+    <div class="notch"></div>
+    <div class="case-label">Case 2: 创业指南</div>
+    
+    <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+    </div>
+
+    <div class="header">
+        <div class="query-title">直播货物线下领取店怎么开</div>
+        <div class="query-tags">
+            <span class="tag primary">教程</span>
+            <span class="tag warning">创业</span>
+            <span class="tag success">本地生活</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="ai-header">
+            <div class="ai-avatar"></div>
+            <span class="ai-label">AI 回答</span>
+            <span class="ai-status">已完成</span>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-card">
+            <div class="summary-label">💡 一句话说清楚</div>
+            <div class="summary-text">给直播商家做「自提 + 售后 + 转化」的最后一公里服务，你是履约节点 + 流量承接点。</div>
+        </div>
+
+        <!-- Step 1: 模式选择 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon warning">1</div>
+                <div class="card-title">先选模式（90%成败在这）</div>
+            </div>
+            <div class="card-body">
+                <div class="carousel">
+                    <div class="carousel-item" style="border-left:3px solid var(--success);">
+                        <div class="carousel-title">✅ 社区自提型</div>
+                        <div class="carousel-desc">最推荐！服务费+到店消费+社群复购，适合新手</div>
+                    </div>
+                    <div class="carousel-item" style="border-left:3px solid var(--warning);">
+                        <div class="carousel-title">⚠️ 主播合作型</div>
+                        <div class="carousel-desc">单量猛但风险高，依赖主播资源</div>
+                    </div>
+                    <div class="carousel-item" style="border-left:3px solid var(--error);">
+                        <div class="carousel-title">⚠️ 品牌体验型</div>
+                        <div class="carousel-desc">成本高，新手慎入</div>
+                    </div>
+                </div>
+                <div class="tip-card success" style="margin-top:10px;">
+                    <span>📌</span>
+                    <span>第一次做？直接选「社区自提型」</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: 选址 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon primary">2</div>
+                <div class="card-title">选址：不是人多，是顺路</div>
+            </div>
+            <div class="card-body">
+                <div class="flow-step">
+                    <div class="flow-num done">1</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🥇 小区出入口</div>
+                        <div class="flow-desc">最佳位置，用户顺便来拿</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">2</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🥈 菜市场旁</div>
+                        <div class="flow-desc">自然人流</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">3</div>
+                    <div class="flow-content">
+                        <div class="flow-title">🥉 社区商业街靠里</div>
+                        <div class="flow-desc">房租低，仓库空间大</div>
+                    </div>
+                </div>
+                <div class="tip-card error" style="margin-top:8px;">
+                    <span>🚫</span>
+                    <span>别开在商场里！房租高+不顺路</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: 赚钱模型 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon success">💰</div>
+                <div class="card-title">赚钱模型（现实版）</div>
+            </div>
+            <div class="card-body">
+                <div class="metric-grid">
+                    <div class="metric-item">
+                        <div class="metric-value">300单</div>
+                        <div class="metric-label">日单量</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">¥9,000</div>
+                        <div class="metric-label">月服务费</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">+¥5-10k</div>
+                        <div class="metric-label">到店加购</div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="metric-value">¥2-4k</div>
+                        <div class="metric-label">房租成本</div>
+                    </div>
+                </div>
+                <div class="tip-card info" style="margin-top:10px;">
+                    <span>📊</span>
+                    <span>能活、能滚、能放大，不是暴富但极稳</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 避坑 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon error">⚠️</div>
+                <div class="card-title">5 个坑提前避雷</div>
+            </div>
+            <div class="card-body" style="padding-top:0;">
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="check-box"></div>
+                    <span class="check-label">❌ 一开始就铺太多 SKU</span>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="check-box"></div>
+                    <span class="check-label">❌ 只等用户来，不做社群</span>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="check-box"></div>
+                    <span class="check-label">❌ 不统计丢货/错货</span>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="check-box"></div>
+                    <span class="check-label">❌ 把自己当零售店</span>
+                </div>
+                <div class="checklist-item" onclick="toggleCheck(this)">
+                    <div class="check-box"></div>
+                    <span class="check-label">❌ 没写清分成规则</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-actions">
+        <button class="action-btn secondary" onclick="showToast('phone2', '正在重新生成...')">🔄 重新生成</button>
+        <button class="action-btn primary" onclick="showToast('phone2', '请描述你的情况...')">💬 继续追问</button>
+    </div>
+
+    <div class="toast" id="toast2"></div>
+</div>
+
+
+<!-- ================================================================
+     Case 3: 宏碁投影仪如何调整画面高低
+     ================================================================ -->
+<div class="phone" id="phone3">
+    <div class="notch"></div>
+    <div class="case-label">Case 3: 设备操作</div>
+    
+    <div class="status-bar">
+        <span>9:41</span>
+        <span>📶 🔋</span>
+    </div>
+
+    <div class="header">
+        <div class="query-title">宏碁投影仪如何调整画面高低</div>
+        <div class="query-tags">
+            <span class="tag primary">教程</span>
+            <span class="tag purple">设备</span>
+            <span class="tag success">实操</span>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="ai-header">
+            <div class="ai-avatar"></div>
+            <span class="ai-label">AI 回答</span>
+            <span class="ai-status">已完成</span>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-card">
+            <div class="summary-label">💡 核心回答</div>
+            <div class="summary-text">从「最快」到「最精细」有 4 种方式：支脚调节 → 梯形校正 → 镜头位移 → 垫东西（应急）</div>
+        </div>
+
+        <!-- Method 1 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon success">✅</div>
+                <div class="card-title">方法一：调底部支脚（最快）</div>
+            </div>
+            <div class="card-body">
+                <div class="diff-container">
+                    <div class="diff-column after">
+                        <div class="diff-header">↻ 顺时针拧</div>
+                        <div class="diff-body">画面往<strong>上</strong>移</div>
+                    </div>
+                    <div class="diff-column before">
+                        <div class="diff-header">↺ 逆时针拧</div>
+                        <div class="diff-body">画面往<strong>下</strong>移</div>
+                    </div>
+                </div>
+                <div class="tip-card success" style="margin-top:10px;">
+                    <span>📌</span>
+                    <span>不进菜单、不影响画质，最朴素但最靠谱 😆</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Method 2 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon primary">⚙️</div>
+                <div class="card-title">方法二：梯形校正（最常用）</div>
+            </div>
+            <div class="card-body">
+                <div class="flow-step">
+                    <div class="flow-num">1</div>
+                    <div class="flow-content">
+                        <div class="flow-title">按遥控器 Menu</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">2</div>
+                    <div class="flow-content">
+                        <div class="flow-title">找到「图像设置」→「梯形校正」</div>
+                    </div>
+                </div>
+                <div class="flow-step">
+                    <div class="flow-num">3</div>
+                    <div class="flow-content">
+                        <div class="flow-title">调整垂直梯形校正</div>
+                        <div class="flow-desc">+ 上移 / - 下移</div>
+                    </div>
+                </div>
+                <div class="tip-card warning" style="margin-top:8px;">
+                    <span>⚠️</span>
+                    <span>梯形校正是数字裁切，调太多影响清晰度</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Method 3 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon purple">🎯</div>
+                <div class="card-title">方法三：镜头位移（王者级）</div>
+            </div>
+            <div class="card-body">
+                <div class="tip-card info">
+                    <span>👑</span>
+                    <span>不裁切、不降画质，中高端型号专属</span>
+                </div>
+                <p style="font-size:11px;color:var(--text-2);margin-top:8px;line-height:1.5;">
+                    菜单里看到「Lens Shift / 镜头位移」，或机身有专门旋钮，就是有这个功能。
+                </p>
+            </div>
+        </div>
+
+        <!-- 推荐顺序 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon success">✅</div>
+                <div class="card-title">推荐的正确顺序</div>
+            </div>
+            <div class="card-body">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;">
+                    <span style="padding:6px 10px;background:var(--success-bg);color:var(--success);border-radius:12px;font-weight:600;">1. 先调支脚</span>
+                    <span style="color:var(--text-3);">→</span>
+                    <span style="padding:6px 10px;background:var(--primary-bg);color:var(--primary);border-radius:12px;font-weight:600;">2. 少量梯形校正</span>
+                    <span style="color:var(--text-3);">→</span>
+                    <span style="padding:6px 10px;background:var(--purple-bg);color:var(--purple);border-radius:12px;font-weight:600;">3. 有 Lens Shift 优先用</span>
+                </div>
+                <div class="tip-card success" style="margin-top:10px;">
+                    <span>💡</span>
+                    <span>这是"画质最优解"</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-actions">
+        <button class="action-btn secondary" onclick="showToast('phone3', '正在重新生成...')">🔄 重新生成</button>
+        <button class="action-btn primary" onclick="showToast('phone3', '请输入你的型号...')">💬 继续追问</button>
+    </div>
+
+    <div class="toast" id="toast3"></div>
+</div>
+
+
+<script>
+    // ============================================
+    // Tabs for Case 1
+    // ============================================
+    function switchTab1(index) {
+        document.querySelectorAll('#phone1 .tab-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+        for (let i = 0; i < 4; i++) {
+            const panel = document.getElementById('case1-tab-' + i);
+            if (panel) panel.classList.toggle('active', i === index);
+        }
+    }
+
+    // ============================================
+    // Copy Code
+    // ============================================
+    function copyCode(btn) {
+        const code = btn.previousElementSibling.textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            btn.textContent = '已复制';
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.textContent = '复制';
+                btn.classList.remove('copied');
+            }, 1500);
+        });
+    }
+
+    // ============================================
+    // Checklist
+    // ============================================
+    function toggleCheck(el) {
+        el.classList.toggle('checked');
+    }
+
+    // ============================================
+    // Toast
+    // ============================================
+    function showToast(phoneId, msg) {
+        const toastId = phoneId.replace('phone', 'toast');
+        const toast = document.getElementById(toastId);
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+</script>
+
+</body>
+</html>
